@@ -175,7 +175,7 @@
 			| ExpMult
 			;
 	ExpMult:
-			ExpMult '+' ExpVal
+			ExpMult '*' ExpVal
 			| ExpMult '/' ExpVal
 			| ExpMult '&&' ExpVal
 			| ExpVal
