@@ -97,11 +97,11 @@
 			|
 			;
 	Args:	Args ',' Exp
-			| 'Exp'
+			| Exp
 			;
 
 	Function:
-			FUNCION TIPO IDENTIFICADOR '(' ParamOpt ')' Bloque
+			FUNCION Tipo IDENTIFICADOR '(' ParamOpt ')' Bloque
 			| FUNCION IDENTIFICADOR '(' ParamOpt ')' Bloque
 			;
 	FunctionDecs:
