@@ -1,0 +1,282 @@
+/~
+ Definición para el lenguaje Tyrion
+~/
+
+
+/~
+ Funciones
+~/
+[*
+// Aqui pueden ir funciones de javascript
+
+*]
+/~
+ Tokens
+~/
+
+/~
+ Ignorar espacios en blanco y comentarios
+~/
+!	' |\t|\r|\n|//[^\n]*\n'
+
+/~
+ Tokens, no hay distinción entre mayusculas y minúsculas
+~/
+	"SI"
+	"SINO"
+	"HACER"
+	"MIENTRAS"
+	"REPETIR"
+	"PORCADA"
+	"EN"
+	"FUNCION INICIO"	FINICIO
+	"FUNCION"
+	"RESPONDER"
+	"LEER"
+	"PREGUNTAR"
+	"HABLAR"
+	"ESCUCHAR"
+	"REGRESAR"
+	"NUMERO"			TNUMERO
+	"LETRAS"			TLETRAS
+	"LOGICO"			TLOGICO
+	"MATRIZ"			TMATRIZ
+	"RAIZ"
+	"VERDADERO"
+	"FALSO"
+	"PI"
+	"E"
+	'{'
+	'}'
+	'\['
+	'\]'
+	';'
+	','
+	'='
+	'!'
+	'=='
+	'!='
+	'<>'
+	'<='
+	'>='
+	'>'
+	'<'
+	'\+'
+	'\-'
+	'/'
+	'\*'
+	'%'
+	'\^'
+	'\('
+	'\)'
+	'\|\|'
+	'\&\&'
+
+
+	'[a-z][a-zA-Z0-9_]*'	IDENTIFICADOR
+	'\'^([^\']|\'\')*\''	LETRAS	[* %match = %match.substr(1, %match.lenght - 2); %match.replace(/''/g, "\'"); *]
+	'([0-9]*\.)?[0-9]+'		NUMERO
+	;
+
+##
+
+Program: _var_star _funcion_star Inicio
+		;
+
+Inicio: FINICIO '(' ')' Bloque
+		;
+
+Var:	Var_dec _asign_opt ';'
+		;
+_var_star:
+		Var _var_star
+		|
+		;
+
+Var_dec:
+		Tipo IDENTIFICADOR
+		;
+_var_dec_coma_star:
+		_var_dec_coma_star ',' _var_dec_coma_star
+		Var_dec
+		|
+		;
+
+Funcion_dec:
+		FUNCION _tipo_opt IDENTIFICADOR '(' _var_dec_coma_star ')' Bloque
+		;
+_funcion_star:
+		Funcion_dec _funcion_star
+		|
+		;
+
+If:		SI '(' Exp ')' Bloque _else_opt
+		;
+
+Else:	SINO _else_1
+		;
+_else_1:
+		If
+		| Bloque
+		;
+_else_opt:
+		Else
+		|
+		;
+
+Bloque:
+		'{' _bloque_1_star '}'
+		;
+_bloque_1:
+		Var
+		| Control
+		| Asignacion
+		| Regreso
+		;
+_bloque_1_star:
+		_bloque_1 _bloque_1_star
+		|
+		;
+
+Control:
+		If
+		| While
+		| Foreach
+		| Dowhile
+		;
+Asignacion:
+		IDENTIFICADOR '=' Exp ';'
+		;
+_asign_opt:
+		'=' Exp
+		|
+		;
+
+Regreso:
+		RESPONDER Exp ';'
+		;
+
+While:	MIENTRAS '(' Exp ')' Bloque
+		;
+
+Foreach:
+		PORCADA IDENTIFICADOR EN IDENTIFICADOR Bloque
+		;
+
+Dowhile:
+		HACER Bloque MIENTRAS '(' Exp ')' ';'
+		;
+
+Tipo:	TLETRAS
+		| TNUMERO
+		| TLOGICO
+		| TMATRIZ
+		;
+_tipo_opt:
+		Tipo
+		|
+		;
+
+Exp:	Exp_or
+		;
+
+Exp_or:	Exp_and _exp_or_1
+		;
+_exp_or_1:
+		'||' Exp_or
+		|
+		;
+
+Exp_and:
+		Exp_eq _exp_and_1
+		;
+_exp_and_1:
+		'&&' Exp_and
+		|
+		;
+
+Exp_eq:	Exp_gt _exp_eq_1
+		;
+_exp_eq_1:
+		'==' Exp_eq
+		| '!=' Exp_eq
+		|
+		;
+
+Exp_gt:	Exp_sum _exp_gt_1
+		;
+_exp_gt_1:
+		_exp_gt_2 Exp_gt
+		|
+		;
+_exp_gt_2:
+		'<='
+		| '>='
+		| '>'
+		| '<'
+		;
+
+Exp_sum:
+		Exp_mult _exp_sum_1
+		;
+_exp_sum_1:
+		'+' Exp_sum
+		| '-' Exp_sum
+		|
+		;
+
+Exp_mult:
+		Exp_raiz _exp_mult_1
+		;
+_exp_mult_1:
+		_exp_mult_2 Exp_mult
+		|
+		;
+_exp_mult_2:
+		'%'
+		| '*'
+		| '/'
+		;
+
+Exp_raiz:
+		_exp_raiz_1
+		| _exp_raiz_2;
+
+_exp_raiz_1:
+		Exp_neg _exp_raiz_1_1
+		;
+_exp_raiz_1_1:
+		'^' Exp_raiz
+		|
+		;
+_exp_raiz_2:
+		RAIZ Exp_neg _exp_raiz_2
+		;
+_exp_raiz_2_1:
+		_exp_raiz_2
+		|
+		;
+
+Exp_neg:
+		Exp_val
+		| '!' Exp_neg
+		;
+Exp_val:
+		IDENTIFICADOR
+		| NUMERO
+		| PI
+		| E
+		| Exp
+		| '(' Exp ')'
+		| Matriz
+		;
+
+Matriz:	IDENTIFICADOR _matriz_1
+		;
+_matriz_1:
+		'[' Exp ']' _matriz_2
+		;
+_matriz_2:
+		_matriz_1
+		|
+		;
