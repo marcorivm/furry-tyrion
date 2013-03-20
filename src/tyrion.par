@@ -313,6 +313,7 @@ var openNewWindow = function() {
 	var windowContent = "<div><textarea id='mySource' style='height:800px; width:500px; float:left'></textarea>";
 	windowContent += "<div id='myErrors' style='height:800px; width:500px; float:left;'></div></div>";
 	windowContent += "<input type='button' value='Save source' onclick=\"localStorage.setItem('program-source', document.getElementById('mySource').value)\" />";
+	windowContent += "<input type='button' value='Reset' onclick=\"document.getElementById('mySource').value = ''; document.getElementById('myErrors').innerHTML = ''\" />";
 	myWindow.document.write(windowContent);
 	myWindow.document.write(storageScript);
 	myWindow.focus();
