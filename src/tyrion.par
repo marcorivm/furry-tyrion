@@ -74,7 +74,8 @@
 
 
 		'[a-z][a-zA-Z0-9_]*'	IDENTIFICADOR
-		'\'^([^\']|\'\')*\''	LETRAS	[* %match = %match.substr(1, %match.lenght - 2); %match.replace(/''/g, "\'"); *]
+		'\'([^\']|\'\')*\''		LETRAS								[* %match = %match.substr( 1, %match.length - 2 );
+																	   %match = %match.replace( /''/g, "\'" );		*]
 		'([0-9]*\.)?[0-9]+'		NUMERO
 		;
 
@@ -177,96 +178,14 @@
 			|
 			;
 
-	Exp:	Exp_or
-			;
-
-	Exp_or:	Exp_and _exp_or_1
-			;
-	_exp_or_1:
-			'||' Exp_or
-			|
-			;
-
-	Exp_and:
-			Exp_eq _exp_and_1
-			;
-	_exp_and_1:
-			'&&' Exp_and
-			|
-			;
-
-	Exp_eq:	Exp_gt _exp_eq_1
-			;
-	_exp_eq_1:
-			'==' Exp_eq
-			| '!=' Exp_eq
-			|
-			;
-
-	Exp_gt:	Exp_sum _exp_gt_1
-			;
-	_exp_gt_1:
-			_exp_gt_2 Exp_gt
-			|
-			;
-	_exp_gt_2:
-			'<='
-			| '>='
-			| '>'
-			| '<'
-			;
-
-	Exp_sum:
-			Exp_mult _exp_sum_1
-			;
-	_exp_sum_1:
-			'+' Exp_sum
-			| '-' Exp_sum
-			|
-			;
-
-	Exp_mult:
-			Exp_raiz _exp_mult_1
-			;
-	_exp_mult_1:
-			_exp_mult_2 Exp_mult
-			|
-			;
-	_exp_mult_2:
-			'%'
-			| '*'
-			| '/'
-			;
-
-	Exp_raiz:
-			_exp_raiz_1
-			| _exp_raiz_2;
-
-	_exp_raiz_1:
-			Exp_neg _exp_raiz_1_1
-			;
-	_exp_raiz_1_1:
-			'^' Exp_raiz
-			|
-			;
-	_exp_raiz_2:
-			RAIZ Exp_neg _exp_raiz_2
-			;
-	_exp_raiz_2_1:
-			_exp_raiz_2
-			|
-			;
-
-	Exp_neg:
-			Exp_val
-			| '!' Exp_neg
+	Exp:	Exp_val
 			;
 	Exp_val:
 			IDENTIFICADOR
 			| NUMERO
+			| LETRAS
 			| PI
 			| E
-			| Exp
 			| '(' Exp ')'
 			| Matriz
 			;
@@ -274,11 +193,8 @@
 	Matriz:	IDENTIFICADOR _matriz_1
 			;
 	_matriz_1:
-			'[' Exp ']' _matriz_2
-			;
-	_matriz_2:
-			_matriz_1
-			|
+			'[' Exp ']' _matriz_1
+			| '[' Exp ']'
 			;
 
 [*
@@ -295,8 +211,8 @@ var saveInput = function(data) {
 	localStorage.removeItem('program-errors');
 	if( ( error_cnt = __parse( str, error_off, error_la ) ) > 0 ) {
 		for( i = 0; i < error_cnt; i++ )
-			updateError( "Parse error near >"
-				+ str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
+			updateError( "Parse error near ->"
+				+ str.substr( error_off[i], 30 ) + "<-, expecting \"" + error_la[i].join() + "\"" );
 	} else {
 		updateError('Programa correcto!!');
 	}
@@ -306,7 +222,7 @@ var openNewWindow = function() {
 	var storageScript =  "<script>";
 	storageScript += "var storageListener = function(e) {"
 	storageScript += "if(e.key == 'program-errors') {";
-	storageScript += "document.getElementById('myErrors').innerHTML += e.newValue + '<br/>';"
+	storageScript += "document.getElementById('myErrors').innerHTML = localStorage.getItem('program-errors') + '<br/>';"
 	storageScript += "}\n}\n";
 	storageScript += "window.addEventListener('storage',  storageListener, true);"
 	storageScript += "</script>";
