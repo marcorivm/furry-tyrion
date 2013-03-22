@@ -29,7 +29,7 @@
 		"REPETIR"
 		"PORCADA"
 		"EN"
-		"FUNCION INICIO"	FINICIO
+		"FUNCION INICIO"		FINICIO
 		"FUNCION"
 		"RESPONDER"
 		"LEER"
@@ -37,13 +37,11 @@
 		"HABLAR"
 		"ESCUCHAR"
 		"REGRESAR"
-		"NUMERO"			TNUMERO
-		"LETRAS"			TLETRAS
-		"LOGICO"			TLOGICO
-		"MATRIZ"			TMATRIZ
+		"NUMERO"				TNUMERO
+		"LETRAS"				TLETRAS
+		"LOGICO"				TLOGICO
+		"MATRIZ"				TMATRIZ
 		"RAIZ"
-		"VERDADERO"
-		"FALSO"
 		"PI"
 		"E"
 		'{'
@@ -54,13 +52,7 @@
 		','
 		'='
 		'!'
-		'=='
-		'!='
-		'<>'
-		'<='
-		'>='
-		'>'
-		'<'
+		'==|!=|<>|<=|>=|>|<'	OP_REL
 		'\+'
 		'\-'
 		'/'
@@ -73,6 +65,7 @@
 		'\&\&'
 
 
+		"VERDADERO | FALSO" 	LOGICO
 		'[a-z][a-zA-Z0-9_]*'	IDENTIFICADOR
 		'\'([^\']|\'\')*\''		LETRAS								[* %match = %match.substr( 1, %match.length - 2 );
 																	   %match = %match.replace( /''/g, "\'" );		*]
@@ -98,9 +91,12 @@
 			Tipo IDENTIFICADOR
 			;
 	_var_dec_coma_star:
-			_var_dec_coma_star ',' _var_dec_coma_star
-			Var_dec
+			_var_dec_coma_star_1
 			|
+			;
+	_var_dec_coma_star_1:
+			_var_dec_coma_star_1 ',' Var_dec
+			| Var_dec
 			;
 
 	Funcion_dec:
@@ -184,10 +180,11 @@
 			IDENTIFICADOR
 			| NUMERO
 			| LETRAS
+			| LOGICO
+			| Matriz
 			| PI
 			| E
 			| '(' Exp ')'
-			| Matriz
 			;
 
 	Matriz:	IDENTIFICADOR _matriz_1
@@ -210,9 +207,12 @@ var saveInput = function(data) {
 	var error_la	= new Array();
 	localStorage.removeItem('program-errors');
 	if( ( error_cnt = __parse( str, error_off, error_la ) ) > 0 ) {
-		for( i = 0; i < error_cnt; i++ )
-			updateError( "Parse error near ->"
-				+ str.substr( error_off[i], 30 ) + "<-, expecting \"" + error_la[i].join() + "\"" );
+		var errors_str = ''
+		for( i = 0; i < error_cnt; i++ ) {
+			errors_str += "<p>Parse error near: <small><b>"
+				+ str.substr( error_off[i], 30 ) + "</b></small>, expecting: <small><b><i>" + error_la[i].join() + "</i></b></small>" + "</p>";
+		}
+		updateError(errors_str);
 	} else {
 		updateError('Programa correcto!!');
 	}
@@ -235,6 +235,8 @@ var openNewWindow = function() {
 	myWindow.focus();
 }
 var updateError = function(error) {
+	var current_date = Date();
+	error = current_date.toLocaleString() + "<br/>" + error;
 	localStorage.setItem('program-errors', error);
 }
 window.addEventListener("storage", storageListener, true);
