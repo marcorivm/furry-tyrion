@@ -118,8 +118,10 @@
 			| Control
 			| Asignacion
 			| Regreso
-			| FunctionCall
+			| FunctionCall ';'
 			| SpecialFunctions
+			| Statements Statements
+			|
 			;
 	Asignacion:
 			IDENTIFICADOR '=' Exp ';'
@@ -131,7 +133,7 @@
 			IDENTIFICADOR '(' ArgsOpt ')'
 			;
 	SpecialFunctions:
-			DECIR '(' Exp ')'
+			DECIR '(' Exp ')' ';'
 			;
 	Read:	ESCUCHAR '(' ')'
 			| PREGUNTAR '(' Exp ')'
@@ -189,6 +191,7 @@
 			| PI
 			| E
 			| '(' Exp ')'
+			| FunctionCall
 			;
 
 [*
