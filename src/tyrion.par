@@ -70,67 +70,73 @@
 		;
 
 	##
-
-	Program: _var_star _funcion_star Inicio
+	Program:
+			VarDecs FunctionDecs Inicio
+			;
+	Inicio:	FINICIO '(' ')' Bloque
 			;
 
-	Inicio: FINICIO '(' ')' Bloque
+	Var:	VarDec '=' Exp ';'
+			| VarDec ';'
 			;
-
-	Var:	Var_dec _asign_opt ';'
+	VarDec: Tipo IDENTIFICADOR
 			;
-	_var_star:
-			Var _var_star
+	VarDecs:
+			VarDecs Var
 			|
 			;
-
-	Var_dec:
-			Tipo IDENTIFICADOR
-			;
-	_var_dec_coma_star:
-			_var_dec_coma_star_1
+	ParamOpt:
+			Param
 			|
 			;
-	_var_dec_coma_star_1:
-			_var_dec_coma_star_1 ',' Var_dec
-			| Var_dec
+	Param:	Param ',' VarDec
+			| VarDec
 			;
-
-	Funcion_dec:
-			FUNCION _tipo_opt IDENTIFICADOR '(' _var_dec_coma_star ')' Bloque
-			;
-	_funcion_star:
-			Funcion_dec _funcion_star
+	ArgsOpt:
+			Args
 			|
 			;
-
-	If:		SI '(' Exp ')' Bloque _else_opt
+	Args:	Args ',' Exp
+			| 'Exp'
 			;
 
-	Else:	SINO _else_1
+	Function:
+			FUNCION TIPO IDENTIFICADOR '(' ParamOpt ')' Bloque
+			| FUNCION IDENTIFICADOR '(' ParamOpt ')' Bloque
 			;
-	_else_1:
-			If
-			| Bloque
-			;
-	_else_opt:
-			Else
+	FunctionDecs:
+			FunctionDecs Function
 			|
 			;
 
 	Bloque:
-			'{' _bloque_1_star '}'
+			'{' Statements '}'
 			;
-	_bloque_1:
+
+	Statements:
 			Var
 			| Control
 			| Asignacion
 			| Regreso
+			| FunctionCall
+			| SpecialFunctions
 			;
-	_bloque_1_star:
-			_bloque_1 _bloque_1_star
-			|
+	Asignacion:
+			IDENTIFICADOR '=' Exp ';'
 			;
+	Regreso:
+			RESPONDER Exp ';'
+			;
+	FunctionCall:
+			IDENTIFICADOR '(' ArgsOpt ')'
+			;
+	SpecialFunctions:
+			DECIR '(' Exp ')'
+			;
+	Read:	ESCUCHAR '(' ')'
+			| PREGUNTAR '(' Exp ')'
+			;
+
 
 	Control:
 			If
@@ -138,79 +144,51 @@
 			| Foreach
 			| Dowhile
 			;
-	Asignacion:
-			IDENTIFICADOR '=' Exp ';'
-			| IDENTIFICADOR '=' Ask ';'
+	If:		SI '(' Exp ')' Bloque
+			| SI '(' Exp ')' Bloque SINO Bloque
+			| SI '(' Exp ')' Bloque SINO If
 			;
-	Ask:	PREGUNTAR '(' LETRAS ')'
-			;
-	_asign_opt:
-			'=' Exp
-			|
-			;
-
-	Regreso:
-			RESPONDER Exp ';'
-			;
-
 	While:	MIENTRAS '(' Exp ')' Bloque
 			;
-
 	Foreach:
 			PORCADA IDENTIFICADOR EN IDENTIFICADOR Bloque
 			;
-
 	Dowhile:
 			HACER Bloque MIENTRAS '(' Exp ')' ';'
 			;
 
-	Tipo:	TLETRAS
+	Tipo: 	TLETRAS
 			| TNUMERO
 			| TLOGICO
 			| TMATRIZ
 			;
-	_tipo_opt:
-			Tipo
-			|
+	Matriz:	Matriz '[' Exp ']'
+			| IDENTIFICADOR
 			;
 
-	Exp:	Exp OP_REL _exp
-			| _exp
+	Exp:	Exp OP_REL ExpSum
+			| ExpSum
 			;
-
-	_exp:	_exp_suma
+	ExpSum:	ExpSum '+' ExpMult
+			| ExpSum '-' ExpMult
+			| ExpSum '||' ExpMult
+			| ExpMult
 			;
-
-	_exp_suma:
-			_exp_suma '+' _exp_mult
-			|_exp_suma '-' _exp_mult
-			|_exp_suma '||' _exp_mult
-			| _exp_mult
+	ExpMult:
+			ExpMult '+' ExpVal
+			| ExpMult '/' ExpVal
+			| ExpMult '&&' ExpVal
+			| ExpVal
 			;
-
-	_exp_mult:
-			_exp_mult '*' Exp_val
-			| _exp_mult '/' Exp_val
-			| _exp_mult '&&' Exp_val
-			| Exp_val
-			;
-
-	Exp_val:
-			IDENTIFICADOR
+	ExpVal:	IDENTIFICADOR
 			| NUMERO
 			| LETRAS
 			| LOGICO
 			| Matriz
+			| Read
 			| PI
 			| E
 			| '(' Exp ')'
-			;
-
-	Matriz:	IDENTIFICADOR _matriz_1
-			;
-	_matriz_1:
-			'[' Exp ']' _matriz_1
-			| '[' Exp ']'
 			;
 
 [*
