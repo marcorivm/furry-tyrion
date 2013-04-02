@@ -163,7 +163,7 @@
 			| TMATRIZ
 			;
 	Matriz:	Matriz '[' Exp ']'
-			| IDENTIFICADOR
+			| IDENTIFICADOR '[' Exp ']'
 			;
 
 	Exp:	Exp OP_REL ExpSum
