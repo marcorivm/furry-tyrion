@@ -32,11 +32,9 @@
 		"FUNCION INICIO"		FINICIO
 		"FUNCION"
 		"RESPONDER"
-		"LEER"
 		"PREGUNTAR"
-		"HABLAR"
+		"DECIR"
 		"ESCUCHAR"
-		"REGRESAR"
 		"NUMERO"				TNUMERO
 		"LETRAS"				TLETRAS
 		"LOGICO"				TLOGICO
@@ -63,7 +61,6 @@
 		'\)'
 		'\|\|'
 		'\&\&'
-
 
 		"VERDADERO | FALSO" 	LOGICO
 		'[a-z][a-zA-Z0-9_]*'	IDENTIFICADOR
@@ -143,6 +140,9 @@
 			;
 	Asignacion:
 			IDENTIFICADOR '=' Exp ';'
+			| IDENTIFICADOR '=' Ask ';'
+			;
+	Ask:	PREGUNTAR '(' LETRAS ')'
 			;
 	_asign_opt:
 			'=' Exp
@@ -174,8 +174,27 @@
 			|
 			;
 
-	Exp:	Exp_val
+	Exp:	Exp OP_REL _exp
+			| _exp
 			;
+
+	_exp:	_exp_suma
+			;
+
+	_exp_suma:
+			_exp_suma '+' _exp_mult
+			|_exp_suma '-' _exp_mult
+			|_exp_suma '||' _exp_mult
+			| _exp_mult
+			;
+
+	_exp_mult:
+			_exp_mult '*' Exp_val
+			| _exp_mult '/' Exp_val
+			| _exp_mult '&&' Exp_val
+			| Exp_val
+			;
+
 	Exp_val:
 			IDENTIFICADOR
 			| NUMERO
