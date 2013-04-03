@@ -1,199 +1,200 @@
-	/~
-	 Definición para el lenguaje Tyrion
-	~/
+/~
+ Definición para el lenguaje Tyrion
+~/
 
 
-	/~
-	 Funciones
-	~/
-	[*
-	// Aqui pueden ir funciones de javascript
+/~
+ Funciones
+~/
+[*
+// Aqui pueden ir funciones de javascript
+*]
+/~
+ Tokens
+~/
 
-	*]
-	/~
-	 Tokens
-	~/
+/~
+ Ignorar espacios en blanco y comentarios
+~/
+!	' |\t|\r|\n|//[^\n]*\n'
 
-	/~
-	 Ignorar espacios en blanco y comentarios
-	~/
-	!	' |\t|\r|\n|//[^\n]*\n'
+/~
+ Tokens, no hay distinción entre mayusculas y minúsculas
+~/
+	"SI"
+	"SINO"
+	"HACER"
+	"MIENTRAS"
+	"REPETIR"
+	"PORCADA"
+	"EN"
+	"FUNCION INICIO"		FINICIO
+	"FUNCION"
+	"RESPONDER"
+	"PREGUNTAR"
+	"DECIR"
+	"ESCUCHAR"
+	"NUMERO"				TNUMERO
+	"LETRAS"				TLETRAS
+	"LOGICO"				TLOGICO
+	"MATRIZ"				TMATRIZ
+	"RAIZ"
+	"PI"
+	"E"
+	'{'
+	'}'
+	'\['
+	'\]'
+	';'
+	','
+	'='
+	'!'
+	'==|!=|<>|<=|>=|>|<'	OP_REL
+	'\+'
+	'\-'
+	'/'
+	'\*'
+	'%'
+	'\^'
+	'\('
+	'\)'
+	'\|\|'
+	'\&\&'
 
-	/~
-	 Tokens, no hay distinción entre mayusculas y minúsculas
-	~/
-		"SI"
-		"SINO"
-		"HACER"
-		"MIENTRAS"
-		"REPETIR"
-		"PORCADA"
-		"EN"
-		"FUNCION INICIO"		FINICIO
-		"FUNCION"
-		"RESPONDER"
-		"PREGUNTAR"
-		"DECIR"
-		"ESCUCHAR"
-		"NUMERO"				TNUMERO
-		"LETRAS"				TLETRAS
-		"LOGICO"				TLOGICO
-		"MATRIZ"				TMATRIZ
-		"RAIZ"
-		"PI"
-		"E"
-		'{'
-		'}'
-		'\['
-		'\]'
-		';'
-		','
-		'='
-		'!'
-		'==|!=|<>|<=|>=|>|<'	OP_REL
-		'\+'
-		'\-'
-		'/'
-		'\*'
-		'%'
-		'\^'
-		'\('
-		'\)'
-		'\|\|'
-		'\&\&'
+	"VERDADERO | FALSO" 	LOGICO
+	'[a-z][a-zA-Z0-9_]*'	IDENTIFICADOR
+	'\'([^\']|\'\')*\''		LETRAS								[* %match = %match.substr( 1, %match.length - 2 );
+																   %match = %match.replace( /''/g, "\'" );		*]
+	'([0-9]*\.)?[0-9]+'		NUMERO
+	;
 
-		"VERDADERO | FALSO" 	LOGICO
-		'[a-z][a-zA-Z0-9_]*'	IDENTIFICADOR
-		'\'([^\']|\'\')*\''		LETRAS								[* %match = %match.substr( 1, %match.length - 2 );
-																	   %match = %match.replace( /''/g, "\'" );		*]
-		'([0-9]*\.)?[0-9]+'		NUMERO
+##
+Program:
+		VarDecs FunctionDecs Inicio
+		;
+Inicio:	FINICIO '(' ')' Bloque
 		;
 
-	##
-	Program:
-			VarDecs FunctionDecs Inicio
-			;
-	Inicio:	FINICIO '(' ')' Bloque
-			;
+Var:	VarDec '=' Exp ';'
+		| VarDec ';'
+		;
+VarDec: Tipo IDENTIFICADOR
+		;
+VarDecs:
+		VarDecs Var
+		|
+		;
+ParamOpt:
+		Param
+		|
+		;
+Param:	Param ',' VarDec
+		| VarDec
+		;
+ArgsOpt:
+		Args
+		|
+		;
+Args:	Args ',' Exp
+		| Exp
+		;
 
-	Var:	VarDec '=' Exp ';'
-			| VarDec ';'
-			;
-	VarDec: Tipo IDENTIFICADOR
-			;
-	VarDecs:
-			VarDecs Var
-			|
-			;
-	ParamOpt:
-			Param
-			|
-			;
-	Param:	Param ',' VarDec
-			| VarDec
-			;
-	ArgsOpt:
-			Args
-			|
-			;
-	Args:	Args ',' Exp
-			| Exp
-			;
+Function:
+		FUNCION Tipo IDENTIFICADOR '(' ParamOpt ')' Bloque
+		| FUNCION IDENTIFICADOR '(' ParamOpt ')' Bloque
+		;
+FunctionDecs:
+		FunctionDecs Function
+		|
+		;
 
-	Function:
-			FUNCION Tipo IDENTIFICADOR '(' ParamOpt ')' Bloque
-			| FUNCION IDENTIFICADOR '(' ParamOpt ')' Bloque
-			;
-	FunctionDecs:
-			FunctionDecs Function
-			|
-			;
+Bloque:
+		'{' Statements '}'
+		;
 
-	Bloque:
-			'{' Statements '}'
-			;
-
-Statements:	Statements Statement
-			|
-			;
-Statement:	Var
-			| Control
-			| Asignacion
-			| Regreso
-			| FunctionCall ';'
-			| SpecialFunctions
-			| ';'
-			;
-	Asignacion:
-			IDENTIFICADOR '=' Exp ';'
-			;
-	Regreso:
-			RESPONDER Exp ';'
-			;
-	FunctionCall:
-			IDENTIFICADOR '(' ArgsOpt ')'
-			;
-	SpecialFunctions:
-			DECIR '(' Exp ')' ';'
-			;
-	Read:	ESCUCHAR '(' ')'
-			| PREGUNTAR '(' Exp ')'
-			;
+Statements:
+		Statements Statement
+		|
+		;
+Statement:
+		Var
+		| Control
+		| Asignacion
+		| Regreso
+		| FunctionCall ';'
+		| SpecialFunctions
+		| ';'
+		;
+Asignacion:
+		IDENTIFICADOR '=' Exp ';'
+		;
+Regreso:
+		RESPONDER Exp ';'
+		;
+FunctionCall:
+		IDENTIFICADOR '(' ArgsOpt ')'
+		;
+SpecialFunctions:
+		DECIR '(' Exp ')' ';'
+		;
+Read:	ESCUCHAR '(' ')'
+		| PREGUNTAR '(' Exp ')'
+		;
 
 
-	Control:
-			If
-			| While
-			| Foreach
-			| Dowhile
-			;
-	If:		SI '(' Exp ')' Bloque
-			| SI '(' Exp ')' Bloque SINO Bloque
-			| SI '(' Exp ')' Bloque SINO If
-			;
-	While:	MIENTRAS '(' Exp ')' REPETIR Bloque
-			;
-	Foreach:
-			PORCADA IDENTIFICADOR EN IDENTIFICADOR Bloque
-			;
-	Dowhile:
-			HACER Bloque MIENTRAS '(' Exp ')' ';'
-			;
+Control:
+		If
+		| While
+		| Foreach
+		| Dowhile
+		;
+If:		SI '(' Exp ')' Bloque
+		| SI '(' Exp ')' Bloque SINO Bloque
+		| SI '(' Exp ')' Bloque SINO If
+		;
+While:	MIENTRAS '(' Exp ')' REPETIR Bloque
+		;
+Foreach:
+		PORCADA IDENTIFICADOR EN IDENTIFICADOR Bloque
+		;
+Dowhile:
+		HACER Bloque MIENTRAS '(' Exp ')' ';'
+		;
 
-	Tipo: 	TLETRAS
-			| TNUMERO
-			| TLOGICO
-			| TMATRIZ
-			;
-	Matriz:	Matriz '[' Exp ']'
-			| IDENTIFICADOR '[' Exp ']'
-			;
+Tipo: 	TLETRAS
+		| TNUMERO
+		| TLOGICO
+		| TMATRIZ
+		;
+Matriz:	Matriz '[' Exp ']'
+		| IDENTIFICADOR '[' Exp ']'
+		;
 
-	Exp:	Exp OP_REL ExpSum
-			| ExpSum
-			;
-	ExpSum:	ExpSum '+' ExpMult
-			| ExpSum '-' ExpMult
-			| ExpSum '||' ExpMult
-			| ExpMult
-			;
-	ExpMult:
-			ExpMult '*' ExpVal
-			| ExpMult '/' ExpVal
-			| ExpMult '&&' ExpVal
-			| ExpVal
-			;
-	ExpVal:	IDENTIFICADOR
-			| NUMERO
-			| LETRAS
-			| LOGICO
-			| Matriz
-			| Read
-			| PI
-			| E
-			| '(' Exp ')'
-			| FunctionCall
-			;
+Exp:	Exp OP_REL ExpSum
+		| ExpSum
+		;
+ExpSum:	ExpSum '+' ExpMult
+		| ExpSum '-' ExpMult
+		| ExpSum '||' ExpMult
+		| ExpMult
+		;
+ExpMult:
+		ExpMult '*' ExpVal
+		| ExpMult '/' ExpVal
+		| ExpMult '&&' ExpVal
+		| ExpVal
+		;
+ExpVal:	IDENTIFICADOR
+		| NUMERO
+		| LETRAS
+		| LOGICO
+		| Matriz
+		| Read
+		| PI
+		| E
+		| '(' Exp ')'
+		| FunctionCall
+		;
 
 [*
 var storageListener = function (e) {
