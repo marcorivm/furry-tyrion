@@ -1,0 +1,13 @@
+// Hola mundo 2.0
+funcion inicio() {
+	Letras nombre;
+	// pregunta podría ser "inteligente" y verificar tipos de datos.
+	nombre = preguntar('Como te llamas?');
+	si (nombre == 'mundo') {
+		decir('Hola ' + nombre + '!');
+	} sino si ( nombre == 'tierra' ) {
+		decir('Hola mundo');
+	} sino {
+		decir('No se quien eres!');
+	}
+}
