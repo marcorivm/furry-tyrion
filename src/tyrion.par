@@ -151,7 +151,7 @@ Statement:	Var
 			| SI '(' Exp ')' Bloque SINO Bloque
 			| SI '(' Exp ')' Bloque SINO If
 			;
-	While:	MIENTRAS '(' Exp ')' Bloque
+	While:	MIENTRAS '(' Exp ')' REPETIR Bloque
 			;
 	Foreach:
 			PORCADA IDENTIFICADOR EN IDENTIFICADOR Bloque
