@@ -113,15 +113,16 @@
 			'{' Statements '}'
 			;
 
-	Statements:
-			Var
+Statements:	Statements Statement
+			|
+			;
+Statement:	Var
 			| Control
 			| Asignacion
 			| Regreso
 			| FunctionCall ';'
 			| SpecialFunctions
-			| Statements Statements
-			|
+			| ';'
 			;
 	Asignacion:
 			IDENTIFICADOR '=' Exp ';'
