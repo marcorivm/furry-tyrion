@@ -241,52 +241,28 @@ ExpVal:	IDENTIFICADOR
 		;
 
 [*
-var storageListener = function (e) {
-    if (e.key == 'program-source') {
-        saveInput(localStorage.getItem('program-source'));
-    }
-}
-var saveInput = function(data) {
-	var str = data;
-	var error_cnt 	= 0;
-	var error_off	= new Array();
-	var error_la	= new Array();
-	localStorage.removeItem('program-errors');
-	if( ( error_cnt = __parse( str, error_off, error_la ) ) > 0 ) {
-		var errors_str = '';
-		for( i = 0; i < error_cnt; i++ ) {
-			errors_str += "<p>Parse error near: <small><b>"
-				+ str.substr( error_off[i], 30 ) + "</b></small>, expecting: <small><b><i>" + error_la[i].join() + "</i></b></small>" + "</p>";
+if(process.argv.length > 2) {
+	var file = process.argv[2];
+	var fs = require('fs');
+	fs.readFile(file, 'UTF-8', function(err, data) {
+		if(err) {
+			console.log("No se encontro el archivo!");
+			return console.log(err);
 		}
-		updateError(errors_str);
-	} else {
-		console.log(my_node);
-		updateError('Programa correcto!!');
-	}
+		var str = data;
+		var error_cnt = 0;
+		var error_off = new Array();
+		var error_la = new Array();
+		if((error_cnt = __##PREFIX##parse(str, error_off, error_la)) > 0) {
+			for(var i = 0; i < error_cnt; i++ ) {
+				console.log( "Parse error near >" + str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
+			}
+		} else {
+			console.log("Programa correcto!")
+		}
+	});
 }
-var openNewWindow = function() {
-	var myWindow = window.open('','','width=1100,height=850');
-	var storageScript = "<script src='http://underscorejs.org/underscore-min.js' type='text/javascript'></script>";
-	storageScript += "<script>";
-	storageScript += "var storageListener = function(e) {"
-	storageScript += "if(e.key == 'program-errors') {";
-	storageScript += "document.getElementById('myErrors').innerHTML = localStorage.getItem('program-errors') + '<br/>';"
-	storageScript += "}\n}\n";
-	storageScript += "window.addEventListener('storage',  storageListener, true);"
-	storageScript += "</script>";
-	var windowContent = "<div><textarea id='mySource' style='height:800px; width:500px; float:left'></textarea>";
-	windowContent += "<div id='myErrors' style='height:800px; width:500px; float:left;'></div></div>";
-	windowContent += "<input type='button' value='Save source' onclick=\"localStorage.setItem('program-source', document.getElementById('mySource').value)\" />";
-	windowContent += "<input type='button' value='Reset' onclick=\"document.getElementById('mySource').value = ''; document.getElementById('myErrors').innerHTML = ''\" />";
-	myWindow.document.write(windowContent);
-	myWindow.document.write(storageScript);
-	myWindow.focus();
+else {
+	console.log( 'usage: tyrion <filename>' );
 }
-var updateError = function(error) {
-	var current_date = Date();
-	error = current_date.toLocaleString() + "<br/>" + error;
-	localStorage.setItem('program-errors', error);
-}
-window.addEventListener("storage", storageListener, true);
-openNewWindow();
 *]
