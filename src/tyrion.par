@@ -221,7 +221,8 @@ var saveInput = function(data) {
 }
 var openNewWindow = function() {
 	var myWindow = window.open('','','width=1100,height=850');
-	var storageScript =  "<script>";
+	var storageScript = "<script src='http://underscorejs.org/underscore-min.js' type='text/javascript'></script>"
+	storageScript += "<script>";
 	storageScript += "var storageListener = function(e) {"
 	storageScript += "if(e.key == 'program-errors') {";
 	storageScript += "document.getElementById('myErrors').innerHTML = localStorage.getItem('program-errors') + '<br/>';"
