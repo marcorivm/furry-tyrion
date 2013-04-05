@@ -1,0 +1,30 @@
+//fibonaccis
+Numero i = 1;
+Numero a;
+funcion fiboIter(Numero n){
+	Numero i = 1;
+	Numero j = 0;
+	Numero k = 0;
+	Numero t = 0;
+	mientras ( k < n ) repetir {
+		t = i + j;
+		i = j;
+		j = t;
+	}
+	decir(j);
+}
+
+funcion Numero fiboRec(Numero n){
+	si ( n < 2 ){
+		responder n;
+	} sino {
+		responder fiboRec(n - 1) + fiboRec(n - 2);
+	}
+}
+
+funcion inicio(){
+	Numero n = preguntar('¿Qué número quieres usar?');
+	fiboIter(n);
+	Numero res = fiboRec(n);
+	decir(res);
+}
