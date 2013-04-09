@@ -10,12 +10,7 @@
 // Aqui pueden ir funciones de javascript
 
 // Declarando underscore
-if(typeof _ === 'undefined') {
-	var fileref = document.createElement('script');
-	fileref.setAttribute("type","text/javascript");
-	fileref.setAttribute("src", "http://underscorejs.org/underscore-min.js");
-	document.getElementsByTagName("head")[0].appendChild(fileref);
-}
+var _ = require('underscore');
 
 var OP_NUMBER = 1,
 	OP_STRING = 2;
