@@ -30,13 +30,23 @@ var NODE = function(id, parent) {
 		addVariable: function(variable) {
 			if(_(this.variables).has(variable.id)) {
 				// Error! variable ya declarada!
+				console.log('Error! La variable ' + variable.id + ' ya se encontraba declarada.');
 				return false;
 			}
 			this.variables[variable.id] = variable;
 			return true;
 		},
 		addNode: function(node) {
+			if(_(this.nodes).has(node.id)) {
+				// Error! función ya declarada!
+				console.log('Error! La función ' + node.id + ' ya se encontraba declarada');
+				return false;
+			}
 			this.children[node.id] = node;
+			return true;
+		},
+		hasVariable: function(variable) {
+			return _(this.variables).has(variable);
 		},
 		variableExists: function(variable) {
 			return _(this.variables).has(variable.id) || (this.parent? this.parent.variableExists(variable) : false);
@@ -241,7 +251,7 @@ if(process.argv.length > 2) {
 	var fs = require('fs');
 	fs.readFile(file, 'UTF-8', function(err, data) {
 		if(err) {
-			console.log("No se encontro el archivo!");
+			console.log("No se encontró el archivo!");
 			return console.log(err);
 		}
 		var str = data;
