@@ -8,6 +8,14 @@
 ~/
 [*
 // Aqui pueden ir funciones de javascript
+
+// Declarando underscore
+if(typeof _ === 'undefined') {
+	var fileref = document.createElement('script');
+	fileref.setAttribute("type","text/javascript");
+	fileref.setAttribute("src", "http://underscorejs.org/underscore-min.js");
+	document.getElementsByTagName("head")[0].appendChild(fileref);
+}
 *]
 /~
  Tokens
@@ -209,19 +217,20 @@ var saveInput = function(data) {
 	var error_la	= new Array();
 	localStorage.removeItem('program-errors');
 	if( ( error_cnt = __parse( str, error_off, error_la ) ) > 0 ) {
-		var errors_str = ''
+		var errors_str = '';
 		for( i = 0; i < error_cnt; i++ ) {
 			errors_str += "<p>Parse error near: <small><b>"
 				+ str.substr( error_off[i], 30 ) + "</b></small>, expecting: <small><b><i>" + error_la[i].join() + "</i></b></small>" + "</p>";
 		}
 		updateError(errors_str);
 	} else {
+		console.log(my_node);
 		updateError('Programa correcto!!');
 	}
 }
 var openNewWindow = function() {
 	var myWindow = window.open('','','width=1100,height=850');
-	var storageScript = "<script src='http://underscorejs.org/underscore-min.js' type='text/javascript'></script>"
+	var storageScript = "<script src='http://underscorejs.org/underscore-min.js' type='text/javascript'></script>";
 	storageScript += "<script>";
 	storageScript += "var storageListener = function(e) {"
 	storageScript += "if(e.key == 'program-errors') {";
