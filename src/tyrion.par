@@ -16,6 +16,42 @@ if(typeof _ === 'undefined') {
 	fileref.setAttribute("src", "http://underscorejs.org/underscore-min.js");
 	document.getElementsByTagName("head")[0].appendChild(fileref);
 }
+
+var OP_NUMBER = 1,
+	OP_STRING = 2;
+
+var VARIABLE = function (id, type) {
+	return {
+		id: id,
+		type: type
+	};
+};
+var NODE = function(id, parent) {
+	return {
+		id: undefined,
+		variables: {},
+		nodes: {},
+		parent: parent,
+		addVariable: function(variable) {
+			if(_(this.variables).has(variable.id)) {
+				// Error! variable ya declarada!
+				return false;
+			}
+			this.variables[variable.id] = variable;
+			return true;
+		},
+		addNode: function(node) {
+			this.children[node.id] = node;
+		},
+		variableExists: function(variable) {
+			return _(this.variables).has(variable.id) || (this.parent? this.parent.variableExists(variable) : false);
+		},
+		nodeExists: function(node) {
+			return _(this.nodes).has(node.id) || (this.parent? this.parent.nodeExists(node) : false);
+		}
+	};
+};
+var my_node = new NODE('global', undefined);
 *]
 /~
  Tokens
@@ -73,7 +109,7 @@ if(typeof _ === 'undefined') {
 	'[a-z][a-zA-Z0-9_]*'	IDENTIFICADOR
 	'\'([^\']|\'\')*\''		LETRAS								[* %match = %match.substr( 1, %match.length - 2 );
 																   %match = %match.replace( /''/g, "\'" );		*]
-	'([0-9]*\.)?[0-9]+'		NUMERO
+	'([0-9]*\.)?[0-9]+'		NUMERO								[* $match = parseFloat(%match); *]
 	;
 
 ##
@@ -83,10 +119,10 @@ Program:
 Inicio:	FINICIO '(' ')' Bloque
 		;
 
-Var:	VarDec '=' Exp ';'
-		| VarDec ';'
+Var:	VarDec '=' Exp ';' 										[* my_node.addVariable(%1, %3); *]
+		| VarDec ';'											[* my_node.addVariable(%1); *]
 		;
-VarDec: Tipo IDENTIFICADOR
+VarDec: Tipo IDENTIFICADOR										[* %% = new VARIABLE(%2, %1); *]
 		;
 VarDecs:
 		VarDecs Var
