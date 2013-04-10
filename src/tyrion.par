@@ -13,8 +13,106 @@
 var _ = require('underscore');
 
 var OP_NUMBER = 1,
-	OP_STRING = 2;
+	OP_STRING = 2,
+	OP_BOOL   = 3,
 
+	OP_ADD = 1,
+	OP_SUB = 2,
+	OP_MULT = 3,
+	OP_DIV = 4,
+	OP_GT = 5,
+	OP_LT = 6,
+	OP_GT_EQ = 7,
+	OP_LT_EQ = 8,
+	OP_EQ = 9,
+	OP_DIFF = 10,
+	OP_AND = 11,
+	OP_OR = 12;
+
+var tabla_operaciones = {
+		'1': {
+			'+': {
+				'1': '1',
+				'2': '2'
+			},
+			'-': {
+				'1': '1'
+			},
+			'*': {
+				'1': '1'
+			},
+			'/': {
+				'1': '1',
+				'2': '2'
+			},
+			'>': {
+				'1': '3',
+			},
+			'<': {
+				'1': '3',
+			},
+			'>=': {
+				'1': '3',
+			},
+			'<=': {
+				'1': '3',
+			},
+			'==': {
+				'1': '3',
+			},
+			'!=': {
+				'1': '3',
+			},
+		},
+		'2': {
+			'+': {
+				'1': '2',
+				'2': '2'
+			},
+			'>': {
+				'2': '3',
+			},
+			'<': {
+				'2': '3',
+			},
+			'>=': {
+				'2': '3',
+			},
+			'<=': {
+				'2': '3',
+			},
+			'==': {
+				'2': '3',
+			},
+			'!=': {
+				'2': '3',
+			}
+		},
+		'3': {
+			'==': {
+				'3': '3',
+			},
+			'!=': {
+				'3': '3',
+			},
+			'&&': {
+				'3': '3',
+			},
+			'||': {
+				'3': '3',
+			}
+		}
+};
+var checkOperation = function (op_1, operation, op_2) {
+	return (
+			_(tabla_operaciones).has(op_1)
+			&& _(tabla_operaciones[op_1]).has(operation)
+			&& _(tabla_operaciones[op_1][operation]).has(op_2)
+		)?
+			tabla_operaciones[op_1][operation][op_2]
+			: -1
+	;
+};
 var VARIABLE = function (id, type) {
 	return {
 		id: id,
