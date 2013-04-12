@@ -154,6 +154,7 @@ var NODE = function(id) {
 		id: id,
 		variables: {},
 		nodes: {},
+		quads: [],
 		parent: undefined,
 		addVariable: function(variable) {
 			if(_(this.variables).has(variable.id)) {
@@ -174,6 +175,21 @@ var NODE = function(id) {
 			this.nodes[node.id] = node;
 			return node;
 		},
+		addQuad: function() {
+
+		},
+		checkQuad: function(quad_op) {
+			switch(quad_op) {
+				case "ExpSum":
+					if (_([OP_ADD, OP_SUB, OP_OR]).indexOf(pila_operadores.first, true) >= 0) {
+						// Crear quad de suma
+						this.addQuad();
+					};
+				break;
+
+				default:
+				;
+			}
 		},
 		callFunction: function(function_id) {
 			if(this.nodeExists(function_id)) {
@@ -226,6 +242,27 @@ var IO = {
 
 // Preparation code
 var root;
+var current_node;
+var PILA = function() {
+	return _([]);
+	return {
+		pila: [],
+		push: fucntion(val) {
+			this.pila.push(val);
+		},
+		pop: function() {
+			return this.pila.pop();
+		},
+		shift: function() {
+			return this.pila.shift();
+		},
+		unshift: function() {
+			return this.pila.unshift();
+		}
+	};
+}
+var pila_operandos = new PILA();
+var pila_operadores = new PILA();
 *]
 /~
  Tokens
@@ -396,24 +433,24 @@ Tipo: 	TLETRAS
 		| TMATRIZ
 		;
 Matriz:	Matriz '[' Exp ']'
-		| IDENTIFICADOR '[' Exp ']' 							[* current_node.useVariable(%1); *]
+		| IDENTIFICADOR '[' Exp ']' 							[* pila_operandos.push(current_node.useVariable(%1)); *]
 		;
 
 Exp:	Exp OP_REL ExpSum
 		| ExpSum
 		;
-ExpSum:	ExpSum '+' ExpMult
-		| ExpSum '-' ExpMult
-		| ExpSum '||' ExpMult
-		| ExpMult
+ExpSum:	ExpSum '+' ExpMult 										[* pila_operadores.push(OP_ADD); *]
+		| ExpSum '-' ExpMult 									[* pila_operadores.push(OP_SUB); *]
+		| ExpSum '||' ExpMult 									[* pila_operadores.push(OP_OR); *]
+		| ExpMult 												[* current_node.checkQuad('ExpSum'); *]
 		;
 ExpMult:
-		ExpMult '*' ExpVal
-		| ExpMult '/' ExpVal
-		| ExpMult '&&' ExpVal
-		| ExpVal
+		ExpMult '*' ExpVal 										[* pila_operadores.push(OP_MULT); *]
+		| ExpMult '/' ExpVal 									[* pila_operadores.push(OP_DIV); *]
+		| ExpMult '&&' ExpVal 									[* pila_operadores.push(OP_AND); *]
+		| ExpVal 												[* current_node.checkQuad('ExpMult'); *]
 		;
-ExpVal:	IDENTIFICADOR 											[* current_node.useVariable(%1); *]
+ExpVal:	IDENTIFICADOR 											[* pila_operandos.push(current_node.useVariable(%1)); *]
 		| NUMERO
 		| LETRAS
 		| LOGICO
@@ -443,7 +480,7 @@ if(process.argv.length > 2) {
 				IO.print( "Parse error near >" + str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
 			}
 		} else {
-			IO.print("Programa correcto!")
+			IO.print("Programa correcto!");
 		}
 	});
 }
