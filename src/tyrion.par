@@ -322,10 +322,7 @@ Bloque:
 		;
 
 Statements:
-		Statements Var 											[*
-																	if(%1.)
-																	_(%1[0]).addToDictionary(%2); %% = %1;
-																*]
+		Statements Var 											[* _(%1[0]).addToDictionary(%2); %% = %1; *]
 		| Statements Statement 									[* %2 = {}; _(%1[1]).addToDictionary(%2); %% = %1; *]
 		|														[* %% = [{}, {}]; *]
 		;
