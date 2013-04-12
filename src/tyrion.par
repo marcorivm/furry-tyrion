@@ -149,7 +149,7 @@ var VARIABLE = function (id, type) {
 		type: type
 	};
 };
-var NODE = function(id, children) {
+var NODE = function(id) {
 	var node = {
 		id: id,
 		variables: {},
@@ -172,27 +172,31 @@ var NODE = function(id, children) {
 			}
 			node.parent = this;
 			this.nodes[node.id] = node;
-			return true;
+			return node;
 		},
-			hasVariable: function(variable) {
+		},
+		callFunction: function(function_id) {
+			if(this.nodeExists(function_id)) {
+				IO.printError(4);
+			};
+		},
+		hasVariable: function(variable) {
 			return _(this.variables).has(variable);
+		},
+		nodeExists: function(node) {
+			return _(this.nodes).has(node.id) || (this.parent? this.parent.nodeExists(node) : false);
+		},
+		useVariable: function(variable_id, override) {
+			if(!override && this.variableExists(variable_id)) {
+				IO.printError(3);
+				return false;
+			}
+			return _(this.variables).has(variable_id)? this.variables[variable_id] : this.parent.useVariable(variable_id, true);
 		},
 		variableExists: function(variable) {
 			return _(this.variables).has(variable.id) || (this.parent? this.parent.variableExists(variable) : false);
 		},
-		nodeExists: function(node) {
-			return _(this.nodes).has(node.id) || (this.parent? this.parent.nodeExists(node) : false);
-		}
 	};
-	if(! _.isUndefined(children)) {
-		var variables = children[0];
-		var nodes = children[1];
-		_(nodes).each(function (value) {
-			value.parent = node;
-		})
-		node.nodes = nodes;
-		node.variables = variables;
-	}
 
 	return node;
 };
@@ -209,6 +213,11 @@ var IO = {
 			case 2:
 				this.print("Error función " + arguments[1] + " ya declarada");
 			break;
+			case 3:
+				this.print("Error la variable "+ error_number + " no se encuentra declarada");
+			break;
+			case 4:
+				this.print("Error la variable "+ error_number + " no se encuentra declarada");
 			default:
 				this.print("Error " + error_number);
 		}
@@ -216,7 +225,7 @@ var IO = {
 };
 
 // Preparation code
-var my_node;
+var root;
 *]
 /~
  Tokens
@@ -279,19 +288,23 @@ var my_node;
 
 ##
 Program:
-		VarDecs FunctionDecs Inicio 							[* my_node = new NODE('global', [%1, %2]); my_node.addNode(%3); *]
+		ProgramInit VarDecs FunctionDecs Inicio
 		;
-Inicio:	FINICIO '(' ')' Bloque 									[* %% = new NODE('inicio', %4); *]
+ProgramInit:													[* root = new NODE('global'); current_node = root; *];
+Inicio: InicioInit '(' ')' Bloque
+		;
+InicioInit:
+		FINICIO													[* current_node = current_node.addNode(new NODE('inicio')); *]
 		;
 
-Var:	VarDec '=' Exp ';' 										[* %% = %1; *]
-		| VarDec ';'											[* %% = %1; *]
+Var:	VarDec '=' Exp ';'
+		| VarDec ';'
 		;
-VarDec: Tipo IDENTIFICADOR										[* %% = new VARIABLE(%2, %1); *]
+VarDec: Tipo IDENTIFICADOR										[* current_node.addVariable(new VARIABLE(%2, %1)); *]
 		;
 VarDecs:
-		VarDecs Var 											[* %% = _(%1).addToDictionary(%2); *]
-		| 														[* %% = {}; *]
+		VarDecs Var
+		|
 		;
 ParamOpt:
 		Param
@@ -309,12 +322,16 @@ Args:	Args ',' Exp
 		;
 
 Function:
-		FUNCION Tipo IDENTIFICADOR '(' ParamOpt ')' Bloque 		[* %% = new NODE(%3, %7); *]
-		| FUNCION IDENTIFICADOR '(' ParamOpt ')' Bloque 		[* %% = new NODE(%2, %6); *]
+		FunctionInit '(' ParamOpt ')' Bloque
 		;
+FunctionInit:
+		FUNCION Tipo IDENTIFICADOR								[* current_node = current_node.addNode(new NODE(%3)); *]
+		| FUNCION IDENTIFICADOR									[* current_node = current_node.addNode(new NODE(%2)); *]
+		;
+
 FunctionDecs:
-		FunctionDecs Function 									[* %% = _(%1).addToDictionary(%2);*]
-		| 														[* %% = {}; *]
+		FunctionDecs Function 									[* current_node = current_node.parent; *]
+		|
 		;
 
 Bloque:
@@ -322,9 +339,9 @@ Bloque:
 		;
 
 Statements:
-		Statements Var 											[* _(%1[0]).addToDictionary(%2); %% = %1; *]
-		| Statements Statement 									[* %2 = {}; _(%1[1]).addToDictionary(%2); %% = %1; *]
-		|														[* %% = [{}, {}]; *]
+		Statements Var
+		| Statements Statement
+		|
 		;
 Statement:
 		Control
@@ -335,13 +352,13 @@ Statement:
 		| ';'
 		;
 Asignacion:
-		IDENTIFICADOR '=' Exp ';'
+		IDENTIFICADOR '=' Exp ';' 								[* current_node.useVariable(%1); *]
 		;
 Regreso:
 		RESPONDER Exp ';'
 		;
 FunctionCall:
-		IDENTIFICADOR '(' ArgsOpt ')'
+		IDENTIFICADOR '(' ArgsOpt ')' 							[* current_node.callFunction(%1); *]
 		;
 SpecialFunctions:
 		DECIR '(' Exp ')' ';'
@@ -364,7 +381,10 @@ If:		SI '(' Exp ')' Bloque
 While:	MIENTRAS '(' Exp ')' REPETIR Bloque
 		;
 Foreach:
-		PORCADA IDENTIFICADOR EN IDENTIFICADOR Bloque
+		ForeachInit Bloque
+		;
+ForeachInit:
+		PORCADA IDENTIFICADOR EN IDENTIFICADOR 					[* current_node.useVariable(%4); current_node = current_node.addNode(new NODE(_.uniqueId('_foreach_'))); current_node.addVariable(%2); *]
 		;
 Dowhile:
 		HACER Bloque MIENTRAS '(' Exp ')' ';'
@@ -376,7 +396,7 @@ Tipo: 	TLETRAS
 		| TMATRIZ
 		;
 Matriz:	Matriz '[' Exp ']'
-		| IDENTIFICADOR '[' Exp ']'
+		| IDENTIFICADOR '[' Exp ']' 							[* current_node.useVariable(%1); *]
 		;
 
 Exp:	Exp OP_REL ExpSum
@@ -393,7 +413,7 @@ ExpMult:
 		| ExpMult '&&' ExpVal
 		| ExpVal
 		;
-ExpVal:	IDENTIFICADOR
+ExpVal:	IDENTIFICADOR 											[* current_node.useVariable(%1); *]
 		| NUMERO
 		| LETRAS
 		| LOGICO
