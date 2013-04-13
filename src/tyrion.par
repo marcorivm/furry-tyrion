@@ -12,6 +12,13 @@
 // Declarando underscore
 var _ = require('underscore');
 
+// Extender prototype de String para usar startsWith
+if (typeof String.prototype.startsWith != 'function') {
+  String.prototype.startsWith = function (str){
+    return this.slice(0, str.length) == str;
+  };
+}
+
 // Extender underscore para usar la función mergeDictionary
 _.mixin({
 	mergeDictionary: function (dictionary) {
@@ -164,31 +171,47 @@ var checkOperation = function (op_1, operation, op_2) {
 			&& _(tabla_operaciones[op_1][operation]).has(op_2)
 		)?
 			tabla_operaciones[op_1][operation][op_2]
-			: -1
-	;
+			: -1;
 };
 var VARIABLE = function (id, type, value) {
 	return {
 		id: id,
 		type: type,
-		value: value
+		value: value,
+		parent: undefined,
+		_namespace: undefined,
+		namesapce: function() {
+			this._namespace = this._namespace? this._namespace : (this.parent? (this.parent.namesapce() + '_' + this.id) : this.id);
+			return this._namespace;
+		},
+		_direction: undefined,
+		direction: function() {
+			this._direction = this._direction? this._direction : FURRY.addVariable(this.namesapce());
+			return this._direction;
+		}
 	};
 };
 var NODE = function(id, type) {
 	var node = {
 		id: id,
-		type: type? type : 0,
+		type: (type? type : 0),
 		args: [],
 		variables: {},
 		nodes: {},
 		quads: [],
 		parent: undefined,
+		_namespace: undefined,
+		namesapce: function() {
+			this._namespace = this._namespace? this._namespace : (this.parent? (this.parent.namesapce() + '_' + this.id) : this.id);
+			return this._namespace;
+		},
 		addVariable: function(variable) {
 			if(_(this.variables).has(variable.id)) {
 				// Error! variable ya declarada!
 				IO.printError(1, variable.id);
 				return false;
 			}
+			variable.parent = this;
 			this.variables[variable.id] = variable;
 			return variable;
 		},
@@ -204,6 +227,7 @@ var NODE = function(id, type) {
 		},
 		addQuad: function(op_id, op_1, op_2, result) {
 			this.quads.push([op_id, op_1, op_2, result]);
+			return this.quads.length - 1;
 		},
 		checkQuad: function(quad_op) {
 			switch(quad_op) {
@@ -250,7 +274,7 @@ var NODE = function(id, type) {
 					this.addQuad(operador, op_2, tmp);
 					if(_.isUndefined(ask)) {
 						break;
-					};
+					}
 				case "Speak":
 					var op_1 = pila_operandos.first();
 					var operador = pila_operadores.pop();
@@ -258,6 +282,26 @@ var NODE = function(id, type) {
 					this.addQuad(operador, tmp);
 					pila_operandos.push(tmp);
 					break;
+				case "Call":
+					var op_1 = pila_operandos.pop();
+					this.addQuad(OP_GOTO, op_1);
+					break;
+				case "If":
+					var op_1 = pila_operandos.pop();
+					if(op_1.type != 3) {
+						IO.printError(5, [op_1, operador]);
+						break;
+					}
+					pila_saltos.push(this.addQuad(OP_GOTOF, op_1));
+					break;
+				case "Else":
+					var falso = pila_saltos.pop();
+					pila_saltos.push(this.addQuad(OP_GOTO));
+					this.quads[falso][2] = pila_saltos.first();
+					break;
+				case "EndIf":
+					var fin = pila_saltos.pop();
+					this.quads[fin][1] = this.quads.length;
 				default:
 				;
 			}
@@ -268,6 +312,20 @@ var NODE = function(id, type) {
 			}
 			IO.printError(4, function_id);
 			return false;
+		},
+		flattenQuads: function() {
+			var flattened_quads = _(this.quads).map(function(quad) {
+				var flattened_quad = _(quad).map(function(item, key) {
+					if(item != undefined) {
+						var tmp = (typeof item === "number")?
+							((key == 0)?  item : item)
+							: item.direction();
+						return tmp;
+					}
+				});
+				return flattened_quad;
+			});
+			return flattened_quads
 		},
 		hasVariable: function(variable) {
 			return _(this.variables).has(variable);
@@ -319,6 +377,22 @@ var IO = {
 };
 
 // Preparation code
+var FURRY = {
+	addVariable: _.memoize(function(variable) {
+		 if(variable.startsWith("_const_")) {
+		 	return [4, this.variables.const.push(0)];
+		 } else if (variable.startsWith("_tmp_") || true) {
+		 	return [0, this.variables.global.push(0)];
+		 }
+	}),
+	variables: {
+		global: [],
+		local: [],
+		local: [],
+		temp: [],
+		const: []
+	}
+};
 var root;
 var current_node;
 var PILA = function() {
@@ -346,6 +420,7 @@ var PILA = function() {
 }
 var pila_operandos = new PILA();
 var pila_operadores = new PILA();
+var pila_saltos = new PILA();
 *]
 /~
  Tokens
@@ -437,18 +512,18 @@ VarDecs:
 		| 														[* /* EMPTY */ *]
 		;
 ParamOpt:
-		Param 													[* /* TODO */ *]
-		| 														[* /* TODO */ *]
+		Param 													[* /* EMPTY */ *]
+		| 														[* /* EMPTY */ *]
 		;
-Param:	Param ',' VarDec 										[* /* TODO */ *]
-		| VarDec 												[* /* TODO */ *]
+Param:	Param ',' VarDec 										[* current_node.addParameter(%3); *]
+		| VarDec 												[* current_node.addParameter(%1); *]
 		;
 ArgsOpt:
-		Args 													[* /* TODO */ *]
-		| 														[* /* TODO */ *]
+		Args 													[* /* EMPTY */ *]
+		| 														[* /* EMPTY */ *]
 		;
-Args:	Args ',' Exp 											[* /* TODO */ *]
-		| Exp 													[* /* TODO */ *]
+Args:	Args ',' Exp 											[* current_node.addArgument(%3); *]
+		| Exp 													[* current_node.addArgument(%1); *]
 		;
 
 Function:
@@ -473,13 +548,13 @@ Statements:
 		|
 		;
 Statement:
-		Var
-		| Control 												[* /* TODO */ *]
-		| Asignacion 											[* /* TODO */ *]
+		Var 													[* /* EMPTY */ *]
+		| Control 												[* current_node = current_node.parent; *]
+		| Asignacion 											[* /* EMPTY */ *]
 		| Regreso 												[* /* TODO */ *]
-		| FunctionCall ';' 										[* /* TODO */ *]
-		| SpecialFunctions 										[* /* TODO */ *]
-		| ';' 													[* /* TODO */ *]
+		| FunctionCall ';' 										[* pila_operandos.push(%1); current_node.checkQuad("Call"); *]
+		| SpecialFunctions 										[* /* EMPTY */ *]
+		| ';' 													[* /* EMPTY */ *]
 		;
 Asignacion:
 		AsigancionInit Exp ';' 								[* current_node.checkQuad('ExpAssign'); *]
@@ -507,14 +582,22 @@ _Read: 	PREGUNTAR 												[* pila_operadores.push(OP_LISTEN); *]
 
 
 Control:
-		If 														[* /* TODO */ *]
+		If 														[* current_node.checkQuad("EndIf"); current_node = current_node.parent; *]
 		| While 												[* /* TODO */ *]
 		| Foreach 												[* /* TODO */ *]
 		| Dowhile 												[* /* TODO */ *]
 		;
-If:		SI '(' Exp ')' Bloque 									[* /* TODO */ *]
-		| SI '(' Exp ')' Bloque SINO Bloque 					[* /* TODO */ *]
-		| SI '(' Exp ')' Bloque SINO If 						[* /* TODO */ *]
+If:		IfInit Bloque 											[* /* EMPTY */ *]
+		| IfInit Bloque SinoInit Bloque 						[* /* EMPTY */ *]
+		| IfInit Bloque SinoInit If 							[* /* EMPTY */ *]
+		;
+IfInit: SI '(' Exp ')' 											[*
+																	current_node = current_node.addNode(new NODE(_.uniqueId('_if_')));
+																	current_node.checkQuad('If');
+																*]
+		;
+SinoInit:
+		SINO  													[* current_node.checkQuad('Else'); *]
 		;
 While:	MIENTRAS '(' Exp ')' REPETIR Bloque 					[* /* TODO */ *]
 		;
@@ -600,8 +683,10 @@ if(process.argv.length > 2) {
 			}
 		} else {
 			IO.print("Programa correcto!");
-			var x = root.nodes.inicio;
-			IO.print(x);
+			fs.writeFile('furry.qds', JSON.stringify(root.nodes.inicio.flattenQuads()), function (err) {
+			  if (err) throw err;
+			  console.log('It\'s saved!');
+			});
 		}
 	});
 }
