@@ -8,12 +8,7 @@
 	local[1] = new Array();
 	var temp = new Array();
 	var funcionnueva;
-	json_string = "[[14,[4,'hola'],[2,5]],"+ // preguntar('hola')
-	"[13,[2,5],[1,0]],"+ // a=preguntar('hola');
-	"[3,[1,0],[4,2],[2,1]],"+ // a*2
-	"[13,[2,0],[1,1]],"+ // i=a*2;
-	"[1,[1,0],[4,4],[2,2]],"+ // a+4;
-	"[15,[2,1]]]"; // hablar(i);
+	json_string = "[[17, 17],[3,[1,0],[4,2],[2,1]],[13,[2,1],[1,1]],[1,[1,0],[4,4],[2,2]],[7,[1,1],[2,2],[2,3]],[18,[2,3],10],[20,[2,4]],[1,[1,0],[4,1],[2,5]],[22,[2,5]],[21,1,[2,6]],[15,[1,1]],[23,[3,'']],[3,[1,0],[0,0],[2,1]],[1,[2,1],[0,1],[2,2]],[13,[2,2],[1,0]],[3,[1,0],[4,2],[2,3]],[23,[2,3]],[13,[4,2],[0,0]],[3,[0,0],[4,2],[2,1]],[2,[2,1],[4,1],[2,2]],[13,[2,2],[0,1]],[20,[2,3]],[22,[0,1]],[21,1,[2,4]],[20,[2,5]],[1,[0,0],[0,1],[2,6]],[22,[2,6]],[21,12,[2,7]],[1,[0,0],[2,7],[2,8]],[15,[2,8]]]";
 	var cuadruplos = eval("(" + json_string + ")");
 	var cont = 0;
 	function buscar(dir){
@@ -122,7 +117,7 @@
 				funcionnueva[1] = new Array();
 				break;
 			case 21: // gosub
-				functionStack.push(new Array(cont, cuadruplos[cont][2], local));
+				functionstack.push(new Array(cont, cuadruplos[cont][2], local));
 				local=funcionnueva;
 				cont=cuadruplos[cont][1]-1;
 				break;
@@ -131,7 +126,7 @@
 				break;
 			case 23: // return
 				var tempreturn = buscar(cuadruplos[cont][1]);
-				var templocal = functionStack.pop();
+				var templocal = functionstack.pop();
 				cont = templocal[0];
 				local = templocal[2];
 				save(tempreturn, templocal[1]);
