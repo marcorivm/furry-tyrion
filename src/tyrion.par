@@ -41,95 +41,119 @@ _.mixin({
 		return dictionary;
 	}
 });
-
-var OP_NUMBER = 1,
+var	OP_NUMBER = 1,
 	OP_STRING = 2,
 	OP_BOOL   = 3,
 
-	OP_ADD = 1,
-	OP_SUB = 2,
-	OP_MULT = 3,
-	OP_DIV = 4,
-	OP_GT = 5,
-	OP_LT = 6,
-	OP_GT_EQ = 7,
-	OP_LT_EQ = 8,
-	OP_EQ = 9,
-	OP_DIFF = 10,
-	OP_AND = 11,
-	OP_OR = 12;
+	OP_ADD    = 1,	// +
+	OP_SUB    = 2,	// -
+	OP_MULT   = 3,	// *
+	OP_DIV    = 4,	// /
+	OP_GT     = 5,	// >
+	OP_LT     = 6,	// >=
+	OP_GT_EQ  = 7,	// <
+	OP_LT_EQ  = 8,	// <=
+	OP_EQ     = 9,	// ==
+	OP_DIFF   = 10,	// !=
+	OP_AND    = 11,	// &
+	OP_OR     = 12,	// |
+	OP_ASSIGN = 13,	// =
+	OP_ASK    = 14,	// preguntar
+	OP_SPEAK  = 15,	// hablar
+	OP_LISTEN = 16,	// escuchar
+	OP_GOTO   = 17,	// goto
+	OP_GOTOF  = 18,	// gotof
+	OP_GOTOT  = 19,	//  gotov
+	OP_ERA    = 20,	// era
+	OP_GOSUB  = 21,	// gosub
+	OP_PARAM  = 22,	// param
+	OP_RETURN = 23,	// return
+
+	Left_Par  = 24,
+	Right_Par = 25
+;
 
 var tabla_operaciones = {
-		'1': {
-			'+': {
-				'1': '1',
-				'2': '2'
+		1: {
+			1: {
+				1: 1,
+				2: 2
 			},
-			'-': {
-				'1': '1'
+			2: {
+				1: 1,
 			},
-			'*': {
-				'1': '1'
+			3: {
+				1: 1,
 			},
-			'/': {
-				'1': '1',
-				'2': '2'
+			4: {
+				1: 1,
+				2: 2,
 			},
-			'>': {
-				'1': '3',
+			5: {
+				1: 3,
 			},
-			'<': {
-				'1': '3',
+			6: {
+				1: 3,
 			},
-			'>=': {
-				'1': '3',
+			7: {
+				1: 3,
 			},
-			'<=': {
-				'1': '3',
+			8: {
+				1: 3,
 			},
-			'==': {
-				'1': '3',
+			9: {
+				1: 3,
 			},
-			'!=': {
-				'1': '3',
+			10: {
+				1: 3,
 			},
-		},
-		'2': {
-			'+': {
-				'1': '2',
-				'2': '2'
-			},
-			'>': {
-				'2': '3',
-			},
-			'<': {
-				'2': '3',
-			},
-			'>=': {
-				'2': '3',
-			},
-			'<=': {
-				'2': '3',
-			},
-			'==': {
-				'2': '3',
-			},
-			'!=': {
-				'2': '3',
+			13: {
+				1: 1,
 			}
 		},
-		'3': {
-			'==': {
-				'3': '3',
+		2: {
+			1: {
+				1: 2,
+				2: 2,
 			},
-			'!=': {
-				'3': '3',
+			5: {
+				2: 3,
 			},
-			'&&': {
-				'3': '3',
+			6: {
+				2: 3,
 			},
-			'||': {
-				'3': '3',
+			7: {
+				2: 3,
+			},
+			8: {
+				2: 3,
+			},
+			9: {
+				2: 3,
+			},
+			10: {
+				2: 3,
+			},
+			13: {
+				1: 2,
+				2: 2,
+			}
+		},
+		3: {
+			9: {
+				3: 3,
+			},
+			10: {
+				3: 3,
+			},
+			11: {
+				3: 3,
+			},
+			12: {
+				3: 3,
+			},
+			13: {
+				3: 3,
 			}
 		}
 };
@@ -143,17 +167,21 @@ var checkOperation = function (op_1, operation, op_2) {
 			: -1
 	;
 };
-var VARIABLE = function (id, type) {
+var VARIABLE = function (id, type, value) {
 	return {
 		id: id,
-		type: type
+		type: type,
+		value: value
 	};
 };
-var NODE = function(id, children) {
+var NODE = function(id, type) {
 	var node = {
 		id: id,
+		type: type? type : 0,
+		args: [],
 		variables: {},
 		nodes: {},
+		quads: [],
 		parent: undefined,
 		addVariable: function(variable) {
 			if(_(this.variables).has(variable.id)) {
@@ -162,7 +190,7 @@ var NODE = function(id, children) {
 				return false;
 			}
 			this.variables[variable.id] = variable;
-			return true;
+			return variable;
 		},
 		addNode: function(node) {
 			if(_(this.nodes).has(node.id)) {
@@ -172,27 +200,92 @@ var NODE = function(id, children) {
 			}
 			node.parent = this;
 			this.nodes[node.id] = node;
-			return true;
+			return node;
 		},
-			hasVariable: function(variable) {
+		addQuad: function(op_id, op_1, op_2, result) {
+			this.quads.push([op_id, op_1, op_2, result]);
+		},
+		checkQuad: function(quad_op) {
+			switch(quad_op) {
+				case "ExpSum":
+				case "ExpMult":
+				case "ExpRel":
+					var first = pila_operadores.first();
+
+					if (first >= 1 && first < 13) {
+						// Crear quad de suma
+						var op_2 = pila_operandos.pop();
+						var op_1 = pila_operandos.pop();
+						var operador = pila_operadores.pop();
+						var tmp = new VARIABLE(_.uniqueId('_tmp_'), checkOperation(op_1.type, operador, op_2.type));
+						if(tmp.type == -1) {
+							IO.printError(5, [op_1, operador, op_2]);
+						} else {
+							this.addQuad(operador, op_1, op_2, tmp);
+							pila_operandos.push(tmp);
+						}
+					} else if (first == 13) {
+					}
+				break;
+				case "ExpAssign":
+					var op_2 = pila_operandos.pop();
+					var op_1 = pila_operandos.pop();
+					var operador = pila_operadores.pop();
+					if(op_2.type == op_1.type) {
+						this.addQuad(operador, op_1, op_2);
+					} else {
+						IO.printError(5, [op_1, operador, op_2]);
+					}
+					break;
+				case "Ask":
+					var ask = true;
+				case "Say":
+					var op_2 = pila_operandos.pop();
+					var operador = pila_operadores.pop();
+					var tmp = new VARIABLE(_.uniqueId('_tmp_'), op_2.type);
+					if(op_2.type != 2) {
+						IO.printError(5, [op_2, operador]);
+						break;
+					}
+					this.addQuad(operador, op_2, tmp);
+					if(_.isUndefined(ask)) {
+						break;
+					};
+				case "Speak":
+					var op_1 = pila_operandos.first();
+					var operador = pila_operadores.pop();
+					var tmp = new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
+					this.addQuad(operador, tmp);
+					pila_operandos.push(tmp);
+					break;
+				default:
+				;
+			}
+		},
+		callFunction: function(function_id, override) {
+			if(override || this.nodeExists(function_id)) {
+				return _(this.nodes).has(function_id)? this.nodes[function_id] : this.parent.callFunction(function_id, true);
+			}
+			IO.printError(4, function_id);
+			return false;
+		},
+		hasVariable: function(variable) {
 			return _(this.variables).has(variable);
-		},
-		variableExists: function(variable) {
-			return _(this.variables).has(variable.id) || (this.parent? this.parent.variableExists(variable) : false);
 		},
 		nodeExists: function(node) {
 			return _(this.nodes).has(node.id) || (this.parent? this.parent.nodeExists(node) : false);
-		}
+		},
+		useVariable: function(variable_id, override) {
+			if(override || this.variableExists(variable_id)) {
+				return _(this.variables).has(variable_id)? this.variables[variable_id] : this.parent.useVariable(variable_id, true);
+			}
+			IO.printError(3, variable_id);
+			return false;
+		},
+		variableExists: function(variable) {
+			return _(this.variables).has(variable) || (this.parent? this.parent.variableExists(variable) : false);
+		},
 	};
-	if(! _.isUndefined(children)) {
-		var variables = children[0];
-		var nodes = children[1];
-		_(nodes).each(function (value) {
-			value.parent = node;
-		})
-		node.nodes = nodes;
-		node.variables = variables;
-	}
 
 	return node;
 };
@@ -209,6 +302,16 @@ var IO = {
 			case 2:
 				this.print("Error función " + arguments[1] + " ya declarada");
 			break;
+			case 3:
+				this.print("Error la variable "+ arguments[1] + " no se encuentra declarada");
+			break;
+			case 4:
+				this.print("Error la función "+ arguments[1]  + " no se encuentra declarada");
+			break
+			case 5:
+				this.print("Error, tipos incompatibles - ")
+				this.print(arguments[1]);
+			break;
 			default:
 				this.print("Error " + error_number);
 		}
@@ -216,7 +319,33 @@ var IO = {
 };
 
 // Preparation code
-var my_node;
+var root;
+var current_node;
+var PILA = function() {
+	return {
+		pila: [],
+		push: function(val) {
+			this.pila.push(val);
+		},
+		pop: function() {
+			return this.pila.pop();
+		},
+		shift: function() {
+			return this.pila.shift();
+		},
+		unshift: function() {
+			return this.pila.unshift();
+		},
+		first: function() {
+			return this.pila[this.pila.length-1];
+		},
+		value: function() {
+			return this.pila;
+		}
+	};
+}
+var pila_operandos = new PILA();
+var pila_operadores = new PILA();
 *]
 /~
  Tokens
@@ -258,7 +387,13 @@ var my_node;
 	','
 	'='
 	'!'
-	'==|!=|<>|<=|>=|>|<'	OP_REL
+	'=='
+	'!='
+	'<>'
+	'<='
+	'>='
+	'>'
+	'<'
 	'\+'
 	'\-'
 	'/'
@@ -279,42 +414,54 @@ var my_node;
 
 ##
 Program:
-		VarDecs FunctionDecs Inicio 							[* my_node = new NODE('global', [%1, %2]); my_node.addNode(%3); *]
+		ProgramInit VarDecs FunctionDecs Inicio 				[* /* EMPTY */ *]
 		;
-Inicio:	FINICIO '(' ')' Bloque 									[* %% = new NODE('inicio', %4); *]
+ProgramInit:													[* root = new NODE('global'); current_node = root; *]
+		;
+Inicio: InicioInit '(' ')' Bloque 								[* /* EMPTY */ *]
+		;
+InicioInit:
+		FINICIO													[* current_node = current_node.addNode(new NODE('inicio')); *]
 		;
 
-Var:	VarDec '=' Exp ';' 										[* %% = %1; *]
-		| VarDec ';'											[* %% = %1; *]
+Var:	VarDecInit Exp ';' 										[* current_node.checkQuad('ExpAssign'); *]
+		| VarDec ';' 											[* /* EMPTY */ *]
 		;
-VarDec: Tipo IDENTIFICADOR										[* %% = new VARIABLE(%2, %1); *]
+VarDecInit:
+		VarDec '=' 												[* pila_operandos.push(%1); pila_operadores.push(OP_ASSIGN); *]
+		;
+VarDec: Tipo IDENTIFICADOR										[* %% = current_node.addVariable(new VARIABLE(%2, %1)); *]
 		;
 VarDecs:
-		VarDecs Var 											[* %% = _(%1).addToDictionary(%2); *]
-		| 														[* %% = {}; *]
+		VarDecs Var 											[* /* EMPTY */ *]
+		| 														[* /* EMPTY */ *]
 		;
 ParamOpt:
-		Param
-		|
+		Param 													[* /* TODO */ *]
+		| 														[* /* TODO */ *]
 		;
-Param:	Param ',' VarDec
-		| VarDec
+Param:	Param ',' VarDec 										[* /* TODO */ *]
+		| VarDec 												[* /* TODO */ *]
 		;
 ArgsOpt:
-		Args
-		|
+		Args 													[* /* TODO */ *]
+		| 														[* /* TODO */ *]
 		;
-Args:	Args ',' Exp
-		| Exp
+Args:	Args ',' Exp 											[* /* TODO */ *]
+		| Exp 													[* /* TODO */ *]
 		;
 
 Function:
-		FUNCION Tipo IDENTIFICADOR '(' ParamOpt ')' Bloque 		[* %% = new NODE(%3, %7); *]
-		| FUNCION IDENTIFICADOR '(' ParamOpt ')' Bloque 		[* %% = new NODE(%2, %6); *]
+		FunctionInit '(' ParamOpt ')' Bloque 					[* /* EMPTY */ *]
 		;
+FunctionInit:
+		FUNCION Tipo IDENTIFICADOR								[* current_node = current_node.addNode(new NODE(%3)); *]
+		| FUNCION IDENTIFICADOR									[* current_node = current_node.addNode(new NODE(%2)); *]
+		;
+
 FunctionDecs:
-		FunctionDecs Function 									[* %% = _(%1).addToDictionary(%2);*]
-		| 														[* %% = {}; *]
+		FunctionDecs Function 									[* current_node = current_node.parent; *]
+		|  														[* /* EMPTY */ *]
 		;
 
 Bloque:
@@ -322,87 +469,116 @@ Bloque:
 		;
 
 Statements:
-		Statements Var 											[* _(%1[0]).addToDictionary(%2); %% = %1; *]
-		| Statements Statement 									[* %2 = {}; _(%1[1]).addToDictionary(%2); %% = %1; *]
-		|														[* %% = [{}, {}]; *]
+		Statements Statement 									[* /* EMPTY */ *]
+		|
 		;
 Statement:
-		Control
-		| Asignacion
-		| Regreso
-		| FunctionCall ';'
-		| SpecialFunctions
-		| ';'
+		Var
+		| Control 												[* /* TODO */ *]
+		| Asignacion 											[* /* TODO */ *]
+		| Regreso 												[* /* TODO */ *]
+		| FunctionCall ';' 										[* /* TODO */ *]
+		| SpecialFunctions 										[* /* TODO */ *]
+		| ';' 													[* /* TODO */ *]
 		;
 Asignacion:
-		IDENTIFICADOR '=' Exp ';'
+		AsigancionInit Exp ';' 								[* current_node.checkQuad('ExpAssign'); *]
+		;
+AsigancionInit:
+		IDENTIFICADOR '=' 									[* pila_operandos.push(current_node.useVariable(%1)); pila_operadores.push(OP_ASSIGN); *]
 		;
 Regreso:
 		RESPONDER Exp ';'
 		;
 FunctionCall:
-		IDENTIFICADOR '(' ArgsOpt ')'
+		FunctionCallInit '(' ArgsOpt ')' 						[* %1.args = %3; *]
+		;
+FunctionCallInit:
+		IDENTIFICADOR 				 							[* %% = current_node.callFunction(%1); *]
 		;
 SpecialFunctions:
-		DECIR '(' Exp ')' ';'
+		DECIR '(' Exp ')' ';' 									[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Speak');  *]
 		;
-Read:	ESCUCHAR '(' ')'
-		| PREGUNTAR '(' Exp ')'
+Read:	ESCUCHAR '(' ')' 										[* pila_operadores.push(OP_LISTEN); current_node.checkQuad('Listen'); *]
+		| _Read '(' Exp ')' 									[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Ask');  *]
+		;
+_Read: 	PREGUNTAR 												[* pila_operadores.push(OP_LISTEN); *]
 		;
 
 
 Control:
-		If
-		| While
-		| Foreach
-		| Dowhile
+		If 														[* /* TODO */ *]
+		| While 												[* /* TODO */ *]
+		| Foreach 												[* /* TODO */ *]
+		| Dowhile 												[* /* TODO */ *]
 		;
-If:		SI '(' Exp ')' Bloque
-		| SI '(' Exp ')' Bloque SINO Bloque
-		| SI '(' Exp ')' Bloque SINO If
+If:		SI '(' Exp ')' Bloque 									[* /* TODO */ *]
+		| SI '(' Exp ')' Bloque SINO Bloque 					[* /* TODO */ *]
+		| SI '(' Exp ')' Bloque SINO If 						[* /* TODO */ *]
 		;
-While:	MIENTRAS '(' Exp ')' REPETIR Bloque
+While:	MIENTRAS '(' Exp ')' REPETIR Bloque 					[* /* TODO */ *]
 		;
 Foreach:
-		PORCADA IDENTIFICADOR EN IDENTIFICADOR Bloque
+		ForeachInit Bloque 										[* /* TODO */ *]
+		;
+ForeachInit:
+		PORCADA IDENTIFICADOR EN IDENTIFICADOR 					[* current_node.useVariable(%4); current_node = current_node.addNode(new NODE(_.uniqueId('_foreach_'))); current_node.addVariable(%2); *]
 		;
 Dowhile:
-		HACER Bloque MIENTRAS '(' Exp ')' ';'
+		HACER Bloque MIENTRAS '(' Exp ')' ';' 					[* /* TODO */ *]
 		;
 
-Tipo: 	TLETRAS
-		| TNUMERO
-		| TLOGICO
-		| TMATRIZ
+Tipo: 	TLETRAS 												[* %% = OP_STRING; *]
+		| TNUMERO 												[* %% = OP_NUMBER; *]
+		| TLOGICO 												[* %% = OP_BOOL; *]
+		| TMATRIZ 												[* %% = OP_ARRAY; *]
 		;
 Matriz:	Matriz '[' Exp ']'
-		| IDENTIFICADOR '[' Exp ']'
+		| IDENTIFICADOR '[' Exp ']' 							[* pila_operandos.push(current_node.useVariable(%1)); *]
 		;
 
-Exp:	Exp OP_REL ExpSum
+Exp:	Exp OpRel ExpSum 										[* current_node.checkQuad('ExpRel'); *]
 		| ExpSum
 		;
-ExpSum:	ExpSum '+' ExpMult
-		| ExpSum '-' ExpMult
-		| ExpSum '||' ExpMult
-		| ExpMult
+ExpSum:	ExpSum _ExpSum ExpMult 									[* current_node.checkQuad('ExpSum'); *]
+		| ExpMult 												[* current_node.checkQuad('ExpSum'); *]
+		;
+_ExpSum: '+'													[* pila_operadores.push(OP_ADD); *]
+		| '-'													[* pila_operadores.push(OP_SUB); *]
+		| '||'													[* pila_operadores.push(OP_OR); *]
 		;
 ExpMult:
-		ExpMult '*' ExpVal
-		| ExpMult '/' ExpVal
-		| ExpMult '&&' ExpVal
-		| ExpVal
+		ExpMult _ExpMult ExpVal 								[* current_node.checkQuad('ExpMult'); *]
+		| ExpVal 												[* current_node.checkQuad('ExpMult'); *]
 		;
-ExpVal:	IDENTIFICADOR
-		| NUMERO
-		| LETRAS
-		| LOGICO
-		| Matriz
-		| Read
-		| PI
-		| E
-		| '(' Exp ')'
-		| FunctionCall
+_ExpMult: '*'													[* pila_operadores.push(OP_MULT); *]
+		| '/'									 				[* pila_operadores.push(OP_DIV); *]
+		| '&&'									 				[* pila_operadores.push(OP_AND); *]
+		;
+ExpVal:	IDENTIFICADOR 											[* pila_operandos.push(current_node.useVariable(%1)); *]
+		| NUMERO 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, %1)));*]
+		| LETRAS 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_STRING, %1)));*]
+		| LOGICO 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_BOOL, %1)));*]
+		| Matriz 												[* /* TODO */ *]
+		| Read 													[* /* EMPTY */ *]
+		| PI 	 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, Math.PI))); *]
+		| E 	 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, Math.E))); *]
+		| LeftPar Exp RightPar 									[* /* EMPTY */ *]
+		| FunctionCall 											[* pila_operandos.push(%1); *]
+		;
+LeftPar:
+		'(' 													[* pila_operadores.push(Left_Par); *]
+		;
+RightPar:
+		')' 													[* pila_operadores.pop(); *]
+		;
+OpRel: 	'==' 													[* pila_operadores.push(OP_EQ); *]
+		| '!=' 													[* pila_operadores.push(OP_DIFF); *]
+		| '<>' 													[* pila_operadores.push(OP_DIFF); *]
+		| '<=' 													[* pila_operadores.push(OP_LT_EQ); *]
+		| '>=' 													[* pila_operadores.push(OP_GT_EQ); *]
+		| '>' 													[* pila_operadores.push(OP_GT); *]
+		| '<'													[* pila_operadores.push(OP_LT); *]
 		;
 
 [*
@@ -423,7 +599,9 @@ if(process.argv.length > 2) {
 				IO.print( "Parse error near >" + str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
 			}
 		} else {
-			IO.print("Programa correcto!")
+			IO.print("Programa correcto!");
+			var x = root.nodes.inicio;
+			IO.print(x);
 		}
 	});
 }
