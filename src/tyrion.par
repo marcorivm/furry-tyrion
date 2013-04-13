@@ -41,7 +41,6 @@ _.mixin({
 		return dictionary;
 	}
 });
-
 var	OP_NUMBER = 1,
 	OP_STRING = 2,
 	OP_BOOL   = 3,
@@ -237,6 +236,28 @@ var NODE = function(id, type) {
 					} else {
 						IO.printError(5, [op_1, operador, op_2]);
 					}
+					break;
+				case "Ask":
+					var ask = true;
+				case "Say":
+					var op_2 = pila_operandos.pop();
+					var operador = pila_operadores.pop();
+					var tmp = new VARIABLE(_.uniqueId('_tmp_'), op_2.type);
+					if(op_2.type != 2) {
+						IO.printError(5, [op_2, operador]);
+						break;
+					}
+					this.addQuad(operador, op_2, tmp);
+					if(_.isUndefined(ask)) {
+						break;
+					};
+				case "Speak":
+					var op_1 = pila_operandos.first();
+					var operador = pila_operadores.pop();
+					var tmp = new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
+					this.addQuad(operador, tmp);
+					pila_operandos.push(tmp);
+					break;
 				default:
 				;
 			}
@@ -476,10 +497,12 @@ FunctionCallInit:
 		IDENTIFICADOR 				 							[* %% = current_node.callFunction(%1); *]
 		;
 SpecialFunctions:
-		DECIR '(' Exp ')' ';' 									[* /* TODO */ *]
+		DECIR '(' Exp ')' ';' 									[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Speak');  *]
 		;
-Read:	ESCUCHAR '(' ')' 										[* /* TODO */ *]
-		| PREGUNTAR '(' Exp ')' 								[* /* TODO */ *]
+Read:	ESCUCHAR '(' ')' 										[* pila_operadores.push(OP_LISTEN); current_node.checkQuad('Listen'); *]
+		| _Read '(' Exp ')' 									[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Ask');  *]
+		;
+_Read: 	PREGUNTAR 												[* pila_operadores.push(OP_LISTEN); *]
 		;
 
 
@@ -537,10 +560,10 @@ ExpVal:	IDENTIFICADOR 											[* pila_operandos.push(current_node.useVariable
 		| LETRAS 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_STRING, %1)));*]
 		| LOGICO 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_BOOL, %1)));*]
 		| Matriz 												[* /* TODO */ *]
-		| Read 													[* /* TODO */ *]
-		| PI 	 												[* /* TODO */ *]
-		| E 	 												[* /* TODO */ *]
-		| LeftPar Exp RightPar
+		| Read 													[* /* EMPTY */ *]
+		| PI 	 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, Math.PI))); *]
+		| E 	 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, Math.E))); *]
+		| LeftPar Exp RightPar 									[* /* EMPTY */ *]
 		| FunctionCall 											[* pila_operandos.push(%1); *]
 		;
 LeftPar:
