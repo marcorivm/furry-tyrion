@@ -15,8 +15,19 @@ var _ = require('underscore');
 // Extender prototype de String para usar startsWith
 if (typeof String.prototype.startsWith != 'function') {
   String.prototype.startsWith = function (str){
-    return this.slice(0, str.length) == str;
+	return this.slice(0, str.length) == str;
   };
+}
+if(typeof Array.prototype.clean != 'function') {
+	Array.prototype.clean = function(deleteValue) {
+	  for (var i = 0; i < this.length; i++) {
+		if (this[i] == deleteValue) {
+		  this.splice(i, 1);
+		  i--;
+		}
+	  }
+	  return this;
+	};
 }
 
 // Extender underscore para usar la función mergeDictionary
@@ -57,8 +68,8 @@ var	OP_NUMBER = 1,
 	OP_MULT   = 3,	// *
 	OP_DIV    = 4,	// /
 	OP_GT     = 5,	// >
-	OP_LT     = 6,	// >=
-	OP_GT_EQ  = 7,	// <
+	OP_GT_EQ  = 6,	// >=
+	OP_LT     = 7,	// <
 	OP_LT_EQ  = 8,	// <=
 	OP_EQ     = 9,	// ==
 	OP_DIFF   = 10,	// !=
@@ -174,7 +185,10 @@ var checkOperation = function (op_1, operation, op_2) {
 			: -1;
 };
 var VARIABLE = function (id, type, value) {
-	return {
+	if(type == 1) {
+		value = parseFloat(value);
+	}
+	var x = {
 		id: id,
 		type: type,
 		value: value,
@@ -190,6 +204,10 @@ var VARIABLE = function (id, type, value) {
 			return this._direction;
 		}
 	};
+	if(id.startsWith('_const_')) {
+		x._direction = [4, value];
+	}
+	return x;
 };
 var NODE = function(id, type) {
 	var node = {
@@ -198,9 +216,10 @@ var NODE = function(id, type) {
 		args: [],
 		variables: {},
 		nodes: {},
-		quads: [],
+		quads_start: undefined,
 		parent: undefined,
 		_namespace: undefined,
+		direction: undefined,
 		namesapce: function() {
 			this._namespace = this._namespace? this._namespace : (this.parent? (this.parent.namesapce() + '_' + this.id) : this.id);
 			return this._namespace;
@@ -226,8 +245,10 @@ var NODE = function(id, type) {
 			return node;
 		},
 		addQuad: function(op_id, op_1, op_2, result) {
-			this.quads.push([op_id, op_1, op_2, result]);
-			return this.quads.length - 1;
+			if(this.direction == undefined) {
+				this.direction = FURRY.quads.length;
+			}
+			return FURRY.quads.push([op_id, op_1, op_2, result].clean()) - 1;
 		},
 		checkQuad: function(quad_op) {
 			switch(quad_op) {
@@ -245,7 +266,7 @@ var NODE = function(id, type) {
 						if(tmp.type == -1) {
 							IO.printError(5, [op_1, operador, op_2]);
 						} else {
-							this.addQuad(operador, op_1, op_2, tmp);
+							this.addQuad(operador, op_1.direction(), op_2.direction(), tmp.direction());
 							pila_operandos.push(tmp);
 						}
 					} else if (first == 13) {
@@ -256,52 +277,70 @@ var NODE = function(id, type) {
 					var op_1 = pila_operandos.pop();
 					var operador = pila_operadores.pop();
 					if(op_2.type == op_1.type) {
-						this.addQuad(operador, op_1, op_2);
+						this.addQuad(operador, op_2.direction(), op_1.direction());
 					} else {
 						IO.printError(5, [op_1, operador, op_2]);
 					}
 					break;
 				case "Ask":
 					var ask = true;
-				case "Say":
+				case "Speak":
 					var op_2 = pila_operandos.pop();
 					var operador = pila_operadores.pop();
-					var tmp = new VARIABLE(_.uniqueId('_tmp_'), op_2.type);
-					if(op_2.type != 2) {
+					if(op_2.type != 2 && op_2.type != 1) {
 						IO.printError(5, [op_2, operador]);
 						break;
 					}
-					this.addQuad(operador, op_2, tmp);
+					this.addQuad(operador, op_2.direction());
 					if(_.isUndefined(ask)) {
 						break;
 					}
-				case "Speak":
+				case "Listen":
 					var op_1 = pila_operandos.first();
 					var operador = pila_operadores.pop();
 					var tmp = new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
-					this.addQuad(operador, tmp);
+					this.addQuad(operador, tmp.direction(), tmp.type);
 					pila_operandos.push(tmp);
 					break;
 				case "Call":
 					var op_1 = pila_operandos.pop();
-					this.addQuad(OP_GOTO, op_1);
+					this.addQuad(OP_GOTO, op_1.direction());
 					break;
 				case "If":
 					var op_1 = pila_operandos.pop();
 					if(op_1.type != 3) {
-						IO.printError(5, [op_1, operador]);
+						IO.printError(5, [op_1]);
 						break;
 					}
-					pila_saltos.push(this.addQuad(OP_GOTOF, op_1));
+					pila_saltos.push(this.addQuad(OP_GOTOF, op_1.direction()));
 					break;
 				case "Else":
 					var falso = pila_saltos.pop();
 					pila_saltos.push(this.addQuad(OP_GOTO));
-					this.quads[falso][2] = pila_saltos.first();
+					FURRY.quads[falso][2] = pila_saltos.first() + 1;
+					break;
+				case "While":
+					var op_1 = pila_operandos.pop();
+					if(op_1.type != 3) {
+						IO.printError(5, [op_1]);
+						break;
+					}
+					pila_saltos.push(this.addQuad(OP_GOTOF, op_1.direction()));
+					break;
+				case "EndElse":
+					var fin = pila_saltos.pop();
+					FURRY.quads[fin][1] = FURRY.quads.length;
 					break;
 				case "EndIf":
 					var fin = pila_saltos.pop();
-					this.quads[fin][1] = this.quads.length;
+					FURRY.quads[fin][2] = FURRY.quads.length;
+					break;
+				case "EndWhile":
+					var falso = pila_saltos.pop();
+					var retorno = pila_saltos.pop();
+					this.addQuad(OP_GOTO, retorno);
+					FURRY.quads[falso][2] = FURRY.quads.length;
+					break;
 				default:
 				;
 			}
@@ -312,20 +351,6 @@ var NODE = function(id, type) {
 			}
 			IO.printError(4, function_id);
 			return false;
-		},
-		flattenQuads: function() {
-			var flattened_quads = _(this.quads).map(function(quad) {
-				var flattened_quad = _(quad).map(function(item, key) {
-					if(item != undefined) {
-						var tmp = (typeof item === "number")?
-							((key == 0)?  item : item)
-							: item.direction();
-						return tmp;
-					}
-				});
-				return flattened_quad;
-			});
-			return flattened_quads
 		},
 		hasVariable: function(variable) {
 			return _(this.variables).has(variable);
@@ -380,9 +405,9 @@ var IO = {
 var FURRY = {
 	addVariable: _.memoize(function(variable) {
 		 if(variable.startsWith("_const_")) {
-		 	return [4, this.variables.const.push(0)];
+			return [4, this.variables.const.push(0)];
 		 } else if (variable.startsWith("_tmp_") || true) {
-		 	return [0, this.variables.global.push(0)];
+			return [0, this.variables.global.push(0)];
 		 }
 	}),
 	variables: {
@@ -391,7 +416,8 @@ var FURRY = {
 		local: [],
 		temp: [],
 		const: []
-	}
+	},
+	quads: []
 };
 var root;
 var current_node;
@@ -480,7 +506,7 @@ var pila_saltos = new PILA();
 	'\|\|'
 	'\&\&'
 
-	"VERDADERO | FALSO" 	LOGICO
+	"VERDADERO|FALSO" 	 	LOGICO 								[* %match = %match.toLowerCase() == "verdadero"; *]
 	'[a-z][a-zA-Z0-9_]*'	IDENTIFICADOR
 	'\'([^\']|\'\')*\''		LETRAS								[* %match = %match.substr( 1, %match.length - 2 );
 																   %match = %match.replace( /''/g, "\'" );		*]
@@ -557,10 +583,10 @@ Statement:
 		| ';' 													[* /* EMPTY */ *]
 		;
 Asignacion:
-		AsigancionInit Exp ';' 								[* current_node.checkQuad('ExpAssign'); *]
+		AsigancionInit Exp ';' 									[* current_node.checkQuad('ExpAssign'); *]
 		;
 AsigancionInit:
-		IDENTIFICADOR '=' 									[* pila_operandos.push(current_node.useVariable(%1)); pila_operadores.push(OP_ASSIGN); *]
+		IDENTIFICADOR '=' 										[* pila_operandos.push(current_node.useVariable(%1)); pila_operadores.push(OP_ASSIGN); *]
 		;
 Regreso:
 		RESPONDER Exp ';'
@@ -582,14 +608,14 @@ _Read: 	PREGUNTAR 												[* pila_operadores.push(OP_LISTEN); *]
 
 
 Control:
-		If 														[* current_node.checkQuad("EndIf"); current_node = current_node.parent; *]
+		If 														[* /* EMPTY */ *]
 		| While 												[* /* TODO */ *]
 		| Foreach 												[* /* TODO */ *]
 		| Dowhile 												[* /* TODO */ *]
 		;
-If:		IfInit Bloque 											[* /* EMPTY */ *]
-		| IfInit Bloque SinoInit Bloque 						[* /* EMPTY */ *]
-		| IfInit Bloque SinoInit If 							[* /* EMPTY */ *]
+If:		IfInit Bloque 											[* current_node.checkQuad("EndIf"); current_node = current_node.parent;  *]
+		| IfInit Bloque SinoInit Bloque 						[* current_node.checkQuad("EndElse"); current_node = current_node.parent;  *]
+		| IfInit Bloque SinoInit If 							[* current_node.checkQuad("EndElse"); current_node = current_node.parent;  *]
 		;
 IfInit: SI '(' Exp ')' 											[*
 																	current_node = current_node.addNode(new NODE(_.uniqueId('_if_')));
@@ -597,9 +623,15 @@ IfInit: SI '(' Exp ')' 											[*
 																*]
 		;
 SinoInit:
-		SINO  													[* current_node.checkQuad('Else'); *]
+		SINO  													[* current_node = current_node.addNode(new NODE(_.uniqueId('_else_'))); current_node.checkQuad('Else'); *]
 		;
-While:	MIENTRAS '(' Exp ')' REPETIR Bloque 					[* /* TODO */ *]
+While:	WhileInit '(' Exp ')' RepetirInit Bloque		 		[* current_node.checkQuad('EndWhile'); *]
+		;
+WhileInit:
+		MIENTRAS  												[* current_node = current_node.addNode(new NODE(_.uniqueId('_while_'))); pila_saltos.push(FURRY.quads.length); *]
+		;
+RepetirInit:
+		REPETIR 												[* current_node.checkQuad('While'); *]
 		;
 Foreach:
 		ForeachInit Bloque 										[* /* TODO */ *]
@@ -683,7 +715,8 @@ if(process.argv.length > 2) {
 			}
 		} else {
 			IO.print("Programa correcto!");
-			fs.writeFile('furry.qds', JSON.stringify(root.nodes.inicio.flattenQuads()), function (err) {
+			var quads = JSON.stringify(FURRY.quads);
+			fs.writeFile('furry.qds', quads  , function (err) {
 			  if (err) throw err;
 			  console.log('It\'s saved!');
 			});
