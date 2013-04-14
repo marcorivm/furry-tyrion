@@ -41,14 +41,22 @@
 				break;
 		}
 	}
-	function preguntar(element, dir){
-		save(prompt(element), dir);
+	function preguntar(element, dir, type){
+		var result = prompt(element);
+		if(type == 1) {
+			result = parseFloat(result);
+		}
+		save(result, dir);
 	}
 	function hablar(element){
 		alert(element);
 	}
-	function escuchar(dir){
-		save(prompt(), dir);
+	function escuchar(dir, type){
+		var result = prompt();
+		if(type == 1) {
+			result = parseFloat(result);
+		}
+		save(result, dir);
 	}
 	while(cont<cuadruplos.length){
 		switch(cuadruplos[cont][0]){
@@ -92,13 +100,13 @@
 				save(buscar(cuadruplos[cont][1]), cuadruplos[cont][2]);
 				break;
 			case 14: // preguntar
-				preguntar(buscar(cuadruplos[cont][1]), cuadruplos[cont][2]);
+				preguntar(buscar(cuadruplos[cont][1]), cuadruplos[cont][2], cuadruplos[cont][3]);
 				break;
 			case 15: // hablar
 				hablar(buscar(cuadruplos[cont][1]));
 				break;
 			case 16: // escuchar
-				escuchar(cuadruplos[cont][1]);
+				escuchar(cuadruplos[cont][1], cuadruplos[cont][2]);
 				break;
 			case 17: // goto
 				cont=cuadruplos[cont][1]-1;
