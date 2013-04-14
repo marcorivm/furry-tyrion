@@ -327,6 +327,14 @@ var NODE = function(id, type) {
 					}
 					pila_saltos.push(this.addQuad(OP_GOTOF, op_1.direction()));
 					break;
+				case "DoWhile":
+					pila_saltos.push(FURRY.quads.length);
+					break;
+				case "EndDoWhile":
+					var inicio = pila_saltos.pop();
+					var op_1 = pila_operandos.pop();
+					this.addQuad(OP_GOTOT, op_1.direction(), inicio);
+					break;
 				case "EndElse":
 					var fin = pila_saltos.pop();
 					FURRY.quads[fin][1] = FURRY.quads.length;
@@ -609,9 +617,9 @@ _Read: 	PREGUNTAR 												[* pila_operadores.push(OP_LISTEN); *]
 
 Control:
 		If 														[* /* EMPTY */ *]
-		| While 												[* /* TODO */ *]
+		| While 												[* /* EMPTY */ *]
 		| Foreach 												[* /* TODO */ *]
-		| Dowhile 												[* /* TODO */ *]
+		| DoWhile 												[* /* EMPTY */ *]
 		;
 If:		IfInit Bloque 											[* current_node.checkQuad("EndIf"); current_node = current_node.parent;  *]
 		| IfInit Bloque SinoInit Bloque 						[* current_node.checkQuad("EndElse"); current_node = current_node.parent;  *]
@@ -639,8 +647,11 @@ Foreach:
 ForeachInit:
 		PORCADA IDENTIFICADOR EN IDENTIFICADOR 					[* current_node.useVariable(%4); current_node = current_node.addNode(new NODE(_.uniqueId('_foreach_'))); current_node.addVariable(%2); *]
 		;
-Dowhile:
-		HACER Bloque MIENTRAS '(' Exp ')' ';' 					[* /* TODO */ *]
+DoWhile:
+		DoWhileInit Bloque MIENTRAS '(' Exp ')' ';' 			[* current_node.checkQuad("EndDoWhile"); current_node = current_node.parent; *]
+		;
+DoWhileInit:
+		HACER 													[* current_node = current_node.addNode(new NODE(_.uniqueId('_dowhile_'))); current_node.checkQuad("DoWhile"); *]
 		;
 
 Tipo: 	TLETRAS 												[* %% = OP_STRING; *]
