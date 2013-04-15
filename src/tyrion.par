@@ -727,7 +727,10 @@ if(process.argv.length > 2) {
 		} else {
 			IO.print("Programa correcto!");
 			var quads = JSON.stringify(FURRY.quads);
-			fs.writeFile('furry.qds', quads  , function (err) {
+			file = file.split('/');
+			file = file[file.length - 1];
+			file = file.replace('.ty', '.qds');
+			fs.writeFile(file, quads  , function (err) {
 			  if (err) throw err;
 			  console.log('It\'s saved!');
 			});
