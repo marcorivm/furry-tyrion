@@ -287,7 +287,7 @@ var NODE = function(id, type) {
 				case "Speak":
 					var op_2 = pila_operandos.pop();
 					var operador = pila_operadores.pop();
-					if(op_2.type != 2 && op_2.type != 1) {
+					if(op_2.type != 2 && op_2.type != 1 && op_2.type != 3) {
 						IO.printError(5, [op_2, operador]);
 						break;
 					}
@@ -663,10 +663,10 @@ Matriz:	Matriz '[' Exp ']'
 		| IDENTIFICADOR '[' Exp ']' 							[* pila_operandos.push(current_node.useVariable(%1)); *]
 		;
 
-Exp:	Exp OpRel ExpSum 										[* current_node.checkQuad('ExpRel'); *]
+Exp:	ExpSum OpRel Exp 										[* current_node.checkQuad('ExpRel'); *]
 		| ExpSum
 		;
-ExpSum:	ExpSum _ExpSum ExpMult 									[* current_node.checkQuad('ExpSum'); *]
+ExpSum:	ExpMult _ExpSum ExpSum 									[* current_node.checkQuad('ExpSum'); *]
 		| ExpMult 												[* current_node.checkQuad('ExpSum'); *]
 		;
 _ExpSum: '+'													[* pila_operadores.push(OP_ADD); *]
@@ -674,7 +674,7 @@ _ExpSum: '+'													[* pila_operadores.push(OP_ADD); *]
 		| '||'													[* pila_operadores.push(OP_OR); *]
 		;
 ExpMult:
-		ExpMult _ExpMult ExpVal 								[* current_node.checkQuad('ExpMult'); *]
+		ExpVal _ExpMult ExpMult 								[* current_node.checkQuad('ExpMult'); *]
 		| ExpVal 												[* current_node.checkQuad('ExpMult'); *]
 		;
 _ExpMult: '*'													[* pila_operadores.push(OP_MULT); *]
@@ -725,14 +725,15 @@ if(process.argv.length > 2) {
 				IO.print( "Parse error near >" + str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
 			}
 		} else {
-			IO.print("Programa correcto!");
+			//IO.print("Programa correcto!");
 			var quads = JSON.stringify(FURRY.quads);
+			console.log(quads);
 			file = file.split('/');
 			file = file[file.length - 1];
 			file = file.replace('.ty', '.qds');
 			fs.writeFile(file, quads  , function (err) {
 			  if (err) throw err;
-			  console.log('It\'s saved!');
+			  // console.log('It\'s saved!');
 			});
 		}
 	});
