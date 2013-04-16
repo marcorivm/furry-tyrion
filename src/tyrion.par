@@ -225,9 +225,6 @@ var NODE = function(id, type) {
 			this._namespace = this._namespace? this._namespace : (this.parent? (this.parent.namesapce() + '_' + this.id) : this.id);
 			return this._namespace;
 		},
-		addArgument: function() {
-			// TODO
-		},
 		addVariable: function(variable) {
 			if(_(this.variables).has(variable.id)) {
 				// Error! variable ya declarada!
@@ -254,9 +251,6 @@ var NODE = function(id, type) {
 			return parameter;
 		},
 		addQuad: function(op_id, op_1, op_2, result) {
-			if(this.direction == undefined) {
-				this.direction = FURRY.quads.length;
-			}
 			return FURRY.quads.push([op_id, op_1, op_2, result].clean()) - 1;
 		},
 		checkQuad: function(quad_op) {
@@ -572,10 +566,10 @@ Param:	Param ',' VarDec 										[* current_node.addParameter(%3); *]
 		;
 ArgsOpt:
 		Args 													[* /* EMPTY */ *]
-		| 														[* /* EMPTY */ *]
+		| 														[* %% = [] *]
 		;
-Args:	Args ',' Exp 											[* current_node.addArgument(%3); *]
-		| Exp 													[* current_node.addArgument(%1); *]
+Args:	Args ',' Exp 											[* %% = %1.push(%3); *]
+		| Exp 													[* %% = [%1]; *]
 		;
 
 Function:
@@ -618,10 +612,7 @@ Regreso:
 		RESPONDER Exp ';'
 		;
 FunctionCall:
-		FunctionCallInit '(' ArgsOpt ')' 						[* %1.args = %3; %% = %1; *]
-		;
-FunctionCallInit:
-		IDENTIFICADOR 				 							[* %% = current_node.callFunction(%1); *]
+		IDENTIFICADOR '(' ArgsOpt ')' 							 [* pila_operadores.push(OP_GOSUB); current_node.checkQuad('OP_GOSUB'); *]
 		;
 SpecialFunctions:
 		DECIR '(' Exp ')' ';' 									[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Speak');  *]
