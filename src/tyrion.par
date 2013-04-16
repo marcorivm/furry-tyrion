@@ -214,15 +214,19 @@ var NODE = function(id, type) {
 		id: id,
 		type: (type? type : 0),
 		args: [],
+		parameters: [],
 		variables: {},
 		nodes: {},
 		quads_start: undefined,
 		parent: undefined,
 		_namespace: undefined,
-		direction: undefined,
+		direction: FURRY.quads.length,
 		namesapce: function() {
 			this._namespace = this._namespace? this._namespace : (this.parent? (this.parent.namesapce() + '_' + this.id) : this.id);
 			return this._namespace;
+		},
+		addArgument: function() {
+			// TODO
 		},
 		addVariable: function(variable) {
 			if(_(this.variables).has(variable.id)) {
@@ -244,6 +248,11 @@ var NODE = function(id, type) {
 			this.nodes[node.id] = node;
 			return node;
 		},
+		addParameter: function(parameter) {
+			parameter = this.addVariable(parameter);
+			this.parameters.push(parameter);
+			return parameter;
+		},
 		addQuad: function(op_id, op_1, op_2, result) {
 			if(this.direction == undefined) {
 				this.direction = FURRY.quads.length;
@@ -252,6 +261,13 @@ var NODE = function(id, type) {
 		},
 		checkQuad: function(quad_op) {
 			switch(quad_op) {
+				case "GotoInicio":
+					pila_saltos.push(this.addQuad(OP_GOTO));
+					break;
+				case "Inicio":
+					var inicio = pila_saltos.pop();
+					inicio[1] = this.direction;
+					break;
 				case "ExpSum":
 				case "ExpMult":
 				case "ExpRel":
@@ -523,14 +539,16 @@ var pila_saltos = new PILA();
 
 ##
 Program:
-		ProgramInit VarDecs FunctionDecs Inicio 				[* /* EMPTY */ *]
+		ProgramInit VarDecs GotoInicio FunctionDecs Inicio 		[* /* EMPTY */ *]
 		;
 ProgramInit:													[* root = new NODE('global'); current_node = root; *]
+		;
+GotoInicio: 													[* current_node.checkQuad('GotoInit'); *]
 		;
 Inicio: InicioInit '(' ')' Bloque 								[* /* EMPTY */ *]
 		;
 InicioInit:
-		FINICIO													[* current_node = current_node.addNode(new NODE('inicio')); *]
+		FINICIO													[* current_node = current_node.addNode(new NODE('inicio')); current_node.addQuad('Inicio') *]
 		;
 
 Var:	VarDecInit Exp ';' 										[* current_node.checkQuad('ExpAssign'); *]
@@ -600,7 +618,7 @@ Regreso:
 		RESPONDER Exp ';'
 		;
 FunctionCall:
-		FunctionCallInit '(' ArgsOpt ')' 						[* %1.args = %3; *]
+		FunctionCallInit '(' ArgsOpt ')' 						[* %1.args = %3; %% = %1; *]
 		;
 FunctionCallInit:
 		IDENTIFICADOR 				 							[* %% = current_node.callFunction(%1); *]
