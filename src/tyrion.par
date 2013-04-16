@@ -292,6 +292,18 @@ var NODE = function(id, type) {
 						IO.printError(5, [op_1, operador, op_2]);
 					}
 					break;
+				case "FunCall":
+					var op_2 = pila_operandos.pop();
+					var op_1 = pila_operandos.pop();
+					if(op_2.length != op_1.length || 
+						! _(op_2).reduce(function(memo, value, key) { 
+							return memo && (value.type == this[key].type); 
+						},true, op_1.parameters)) {
+						IO.printError(5, op_2);
+					}
+					// TODO: Agregar gotosub.
+					return new VARIABLE(_.uniqueId('_tmp_'), op_1.type)); 
+					break;
 				case "Ask":
 					var ask = true;
 				case "Speak":
@@ -311,10 +323,6 @@ var NODE = function(id, type) {
 					var tmp = new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
 					this.addQuad(operador, tmp.direction(), tmp.type);
 					pila_operandos.push(tmp);
-					break;
-				case "Call":
-					var op_1 = pila_operandos.pop();
-					this.addQuad(OP_GOTO, op_1.direction());
 					break;
 				case "If":
 					var op_1 = pila_operandos.pop();
@@ -576,7 +584,7 @@ Function:
 		FunctionInit '(' ParamOpt ')' Bloque 					[* /* EMPTY */ *]
 		;
 FunctionInit:
-		FUNCION Tipo IDENTIFICADOR								[* current_node = current_node.addNode(new NODE(%3)); *]
+		FUNCION Tipo IDENTIFICADOR								[* current_node = current_node.addNode(new NODE(%3, %2)); *]
 		| FUNCION IDENTIFICADOR									[* current_node = current_node.addNode(new NODE(%2)); *]
 		;
 
@@ -597,8 +605,8 @@ Statement:
 		Var 													[* /* EMPTY */ *]
 		| Control 												[* current_node = current_node.parent; *]
 		| Asignacion 											[* /* EMPTY */ *]
-		| Regreso 												[* /* TODO */ *]
-		| FunctionCall ';' 										[* pila_operandos.push(%1); current_node.checkQuad("Call"); *]
+		| Regreso 												[* /* TODO  */ *]
+		| FunctionCall ';' 										[* /* EMPTY */ *]
 		| SpecialFunctions 										[* /* EMPTY */ *]
 		| ';' 													[* /* EMPTY */ *]
 		;
@@ -612,7 +620,11 @@ Regreso:
 		RESPONDER Exp ';'
 		;
 FunctionCall:
-		IDENTIFICADOR '(' ArgsOpt ')' 							 [* pila_operadores.push(OP_GOSUB); current_node.checkQuad('OP_GOSUB'); *]
+		IDENTIFICADOR '(' ArgsOpt ')' 							[* 
+																	pila_operandos.push(%1); 
+																	pila_operandos.push(%3);
+																	%% = current_node.checkQuad('FunCall'); 
+																*]
 		;
 SpecialFunctions:
 		DECIR '(' Exp ')' ';' 									[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Speak');  *]
@@ -627,7 +639,7 @@ _Read: 	PREGUNTAR 												[* pila_operadores.push(OP_LISTEN); *]
 Control:
 		If 														[* /* EMPTY */ *]
 		| While 												[* /* EMPTY */ *]
-		| Foreach 												[* /* TODO */ *]
+		| Foreach 												[* /* TODO  */ *]
 		| DoWhile 												[* /* EMPTY */ *]
 		;
 If:		IfInit Bloque 											[* current_node.checkQuad("EndIf"); current_node = current_node.parent;  *]
@@ -694,7 +706,7 @@ ExpVal:	IDENTIFICADOR 											[* pila_operandos.push(current_node.useVariable
 		| NUMERO 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, %1)));*]
 		| LETRAS 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_STRING, %1)));*]
 		| LOGICO 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_BOOL, %1)));*]
-		| Matriz 												[* /* TODO */ *]
+		| Matriz 												[* /* TODO  */ *]
 		| Read 													[* /* EMPTY */ *]
 		| PI 	 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, Math.PI))); *]
 		| E 	 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, Math.E))); *]
