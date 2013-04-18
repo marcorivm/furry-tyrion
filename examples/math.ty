@@ -1,0 +1,14 @@
+funcion inicio() {
+	Numero suma = 5 + 10.83 + 10;
+	decir(suma == 25.83);
+	Numero resta = 9 - 4 - .25;
+	decir(resta == 4.75);
+	Numero suma_resta = 5 - 2 + 8 - ( 1 + 1 ) + (15 - 5);
+	decir(suma_resta == 19);
+	Numero multiplicacion = 6 * 3 * 7;
+	decir(multiplicacion == 126);
+	Numero division = 6 / 2 / 3;
+	decir(division == 1);
+	Numero multiplicacion_suma =  3 * 4 + 7 * 6 - 1 * ( 5 / 6 ) - 3 / 2;
+	decir(multiplicacion_suma);
+}
