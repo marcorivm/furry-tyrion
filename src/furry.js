@@ -1,14 +1,10 @@
-<body id="body">
-	<textarea name="quads" id="quads" cols="30" rows="10"></textarea><button onclick="vm(document.getElementById('quads').value);">Correr!</button>
-</body>
-<script>
-var vm = function(json_string) {
-	var functionstack = new Array();
-	var global = new Array();
-	var local = new Array();
-	local[0] = new Array();
-	local[1] = new Array();
-	var temp = new Array();
+var FURRY = function(json_string) {
+	var functionstack = [];
+	var global = [];
+	var local = [];
+	local[0] = [];
+	local[1] = [];
+	var temp = [];
 	var funcionnueva;
 	var cuadruplos = JSON.parse(json_string);
 	var cont = 0;
@@ -50,7 +46,7 @@ var vm = function(json_string) {
 		save(result, dir);
 	}
 	function hablar(element){
-		alert(element);
+		console.log(element);
 	}
 	function escuchar(dir, type){
 		var result = prompt();
@@ -121,9 +117,9 @@ var vm = function(json_string) {
 					cont=cuadruplos[cont][2]-1;
 				break;
 			case 20: // era
-				funcionnueva = new Array();
-				funcionnueva[0] = new Array();
-				funcionnueva[1] = new Array();
+				funcionnueva = [];
+				funcionnueva[0] = [];
+				funcionnueva[1] = [];
 				break;
 			case 21: // gosub
 				functionstack.push(new Array(cont, cuadruplos[cont][2], local));
@@ -144,4 +140,3 @@ var vm = function(json_string) {
 		cont++;
 	}
 };
-</script>

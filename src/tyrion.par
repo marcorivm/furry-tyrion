@@ -295,14 +295,14 @@ var NODE = function(id, type) {
 				case "FunCall":
 					var op_2 = pila_operandos.pop();
 					var op_1 = pila_operandos.pop();
-					if(op_2.length != op_1.length || 
-						! _(op_2).reduce(function(memo, value, key) { 
-							return memo && (value.type == this[key].type); 
+					if(op_2.length != op_1.length ||
+						! _(op_2).reduce(function(memo, value, key) {
+							return memo && (value.type == this[key].type);
 						},true, op_1.parameters)) {
 						IO.printError(5, op_2);
 					}
 					// TODO: Agregar gotosub.
-					return new VARIABLE(_.uniqueId('_tmp_'), op_1.type)); 
+					return new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
 					break;
 				case "Ask":
 					var ask = true;
@@ -620,10 +620,10 @@ Regreso:
 		RESPONDER Exp ';'
 		;
 FunctionCall:
-		IDENTIFICADOR '(' ArgsOpt ')' 							[* 
-																	pila_operandos.push(%1); 
+		IDENTIFICADOR '(' ArgsOpt ')' 							[*
+																	pila_operandos.push(%1);
 																	pila_operandos.push(%3);
-																	%% = current_node.checkQuad('FunCall'); 
+																	%% = current_node.checkQuad('FunCall');
 																*]
 		;
 SpecialFunctions:
