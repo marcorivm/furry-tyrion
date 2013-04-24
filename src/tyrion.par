@@ -263,24 +263,19 @@ var NODE = function(id, type) {
 					inicio[1] = this.direction;
 					break;
 				case "ExpSum":
-				case "ExpMult":
-				case "ExpRel":
-					var first = pila_operadores.first();
-
-					if (first >= 1 && first < 13) {
-						// Crear quad de suma
-						var op_2 = pila_operandos.pop();
-						var op_1 = pila_operandos.pop();
-						var operador = pila_operadores.pop();
-						var tmp = new VARIABLE(_.uniqueId('_tmp_'), checkOperation(op_1.type, operador, op_2.type));
-						if(tmp.type == -1) {
-							IO.printError(5, [op_1, operador, op_2]);
-						} else {
-							this.addQuad(operador, op_1.direction(), op_2.direction(), tmp.direction());
-							pila_operandos.push(tmp);
-						}
-					} else if (first == 13) {
+					var operador = pila_operadores.first();
+					if( operador == 1 || operador == 2 || operador == 12 ) {
+						this.normalQuad();
 					}
+					break;
+				case "ExpMult":
+					var operador = pila_operadores.first();
+					if( operador == 3 || operador == 4 || operador == 11 ) {
+						this.normalQuad();
+					}
+					break;
+				case "ExpRel":
+					this.normalQuad();
 				break;
 				case "ExpAssign":
 					var op_2 = pila_operandos.pop();
@@ -383,6 +378,19 @@ var NODE = function(id, type) {
 		},
 		nodeExists: function(node) {
 			return _(this.nodes).has(node.id) || (this.parent? this.parent.nodeExists(node) : false);
+		},
+		normalQuad: function() {
+			// Crear quad de suma
+			var op_2 = pila_operandos.pop();
+			var op_1 = pila_operandos.pop();
+			var operador = pila_operadores.pop();
+			var tmp = new VARIABLE(_.uniqueId('_tmp_'), checkOperation(op_1.type, operador, op_2.type));
+			if(tmp.type == -1) {
+				IO.printError(5, [op_1, operador, op_2]);
+			} else {
+				this.addQuad(operador, op_1.direction(), op_2.direction(), tmp.direction());
+				pila_operandos.push(tmp);
+			}
 		},
 		useVariable: function(variable_id, override) {
 			if(override || this.variableExists(variable_id)) {
@@ -687,20 +695,20 @@ Matriz:	Matriz '[' Exp ']'
 Exp:	ExpSum OpRel Exp 										[* current_node.checkQuad('ExpRel'); *]
 		| ExpSum
 		;
-ExpSum:	ExpMult _ExpSum ExpSum 									[* current_node.checkQuad('ExpSum'); *]
+ExpSum:	ExpMult _ExpSum ExpSum									[* ; *]
 		| ExpMult 												[* current_node.checkQuad('ExpSum'); *]
 		;
-_ExpSum: '+'													[* pila_operadores.push(OP_ADD); *]
-		| '-'													[* pila_operadores.push(OP_SUB); *]
-		| '||'													[* pila_operadores.push(OP_OR); *]
+_ExpSum: '+'													[* current_node.checkQuad('ExpSum'); pila_operadores.push(OP_ADD); *]
+		| '-'													[* current_node.checkQuad('ExpSum'); pila_operadores.push(OP_SUB); *]
+		| '||'													[* current_node.checkQuad('ExpSum'); pila_operadores.push(OP_OR); *]
 		;
 ExpMult:
-		ExpVal _ExpMult ExpMult 								[* current_node.checkQuad('ExpMult'); *]
+		ExpVal _ExpMult ExpMult 		 						[* ; *]
 		| ExpVal 												[* current_node.checkQuad('ExpMult'); *]
 		;
-_ExpMult: '*'													[* pila_operadores.push(OP_MULT); *]
-		| '/'									 				[* pila_operadores.push(OP_DIV); *]
-		| '&&'									 				[* pila_operadores.push(OP_AND); *]
+_ExpMult: '*'													[* current_node.checkQuad('ExpMult'); pila_operadores.push(OP_MULT); *]
+		| '/'									 				[* current_node.checkQuad('ExpMult'); pila_operadores.push(OP_DIV); *]
+		| '&&'									 				[* current_node.checkQuad('ExpMult'); pila_operadores.push(OP_AND); *]
 		;
 ExpVal:	IDENTIFICADOR 											[* pila_operandos.push(current_node.useVariable(%1)); *]
 		| NUMERO 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, %1)));*]
