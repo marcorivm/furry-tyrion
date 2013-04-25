@@ -1,60 +1,55 @@
-var FURRY = function(json_string) {
-	var functionstack = [];
-	var global = [];
-	var local = [];
-	local[0] = [];
-	local[1] = [];
-	var temp = [];
-	var funcionnueva;
-	var cuadruplos = JSON.parse(json_string);
-	var cont = 0;
-	function buscar(dir){
-		switch(dir[0]){
-			case 0: //variable global
-				return global[dir[1]];
-			case 1: //variable local
-				return local[0][dir[1]];
-			case 2: //temporal local
-				return local[1][dir[1]];
-			case 3: //temporal global
-				return temp[dir[1]];
-			case 4: //constante
-				return dir[1];
-		}
+function buscar(dir){
+	switch(dir[0]){
+		case 0: //variable global
+			return global[dir[1]];
+		case 1: //variable local
+			return local[0][dir[1]];
+		case 2: //temporal local
+			return local[1][dir[1]];
+		case 3: //temporal global
+			return temp[dir[1]];
+		case 4: //constante
+			return dir[1];
 	}
-	function save(element, dir){
-		switch(dir[0]){
-			case 0: //variable global
-				global[dir[1]]=element;
-				break;
-			case 1: //variable local
-				local[0][dir[1]]=element;
-				break;
-			case 2: //temporal local
-				local[1][dir[1]]=element;
-				break;
-			case 3: //temporal global
-				temp[dir[1]]=element;
-				break;
-		}
+}
+function save(element, dir){
+	switch(dir[0]){
+		case 0: //variable global
+			global[dir[1]]=element;
+			break;
+		case 1: //variable local
+			local[0][dir[1]]=element;
+			break;
+		case 2: //temporal local
+			local[1][dir[1]]=element;
+			break;
+		case 3: //temporal global
+			temp[dir[1]]=element;
+			break;
 	}
-	function preguntar(element, dir, type){
-		var result = prompt(element);
-		if(type == 1) {
-			result = parseFloat(result);
-		}
-		save(result, dir);
+}
+function preguntar(element, dir, type){
+	var result = prompt(element);
+	if(type == 1) {
+		result = parseFloat(result);
 	}
-	function hablar(element){
-		console.log(element);
+	save(result, dir);
+}
+function hablar(element){
+	console.log(element);
+	var audioElement = document.createElement('audio');
+	audioElement.setAttribute('src', "http://www.dajavax.com/tts.php?ie=UTF-8&tl=es_mx&q="+encodeURI(element)+"&textlen="+element.length+"&total=1&idx=0");
+	audioElement.addEventListener('ended', exec);
+	audioElement.play();
+}
+function escuchar(dir, type){
+	var result = prompt();
+	if(type == 1) {
+		result = parseFloat(result);
 	}
-	function escuchar(dir, type){
-		var result = prompt();
-		if(type == 1) {
-			result = parseFloat(result);
-		}
-		save(result, dir);
-	}
+	save(result, dir);
+}
+function exec(){
 	while(cont<cuadruplos.length){
 		switch(cuadruplos[cont][0]){
 			case 1: // +
@@ -101,6 +96,8 @@ var FURRY = function(json_string) {
 				break;
 			case 15: // hablar
 				hablar(buscar(cuadruplos[cont][1]));
+				cont++;
+				return;
 				break;
 			case 16: // escuchar
 				escuchar(cuadruplos[cont][1], cuadruplos[cont][2]);
@@ -139,4 +136,16 @@ var FURRY = function(json_string) {
 		}
 		cont++;
 	}
+}
+function FURRY(json_string) {
+	functionstack = [];
+	global = [];
+	local = [];
+	local[0] = [];
+	local[1] = [];
+	temp = [];
+	funcionnueva = null;
+	cuadruplos = JSON.parse(json_string);
+	cont = 0;
+	exec();
 };
