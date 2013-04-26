@@ -256,11 +256,12 @@ var NODE = function(id, type) {
 		checkQuad: function(quad_op) {
 			switch(quad_op) {
 				case "GotoInicio":
-					pila_saltos.push(this.addQuad(OP_GOTO));
+					this.addQuad(OP_ERA);
+					pila_saltos.push(this.addQuad(OP_GOSUB));
 					break;
 				case "Inicio":
 					var inicio = pila_saltos.pop();
-					inicio[1] = this.direction;
+					FURRY.quads[inicio][1] = this.direction;
 					break;
 				case "ExpSum":
 					var operador = pila_operadores.first();
@@ -290,14 +291,20 @@ var NODE = function(id, type) {
 				case "FunCall":
 					var op_2 = pila_operandos.pop();
 					var op_1 = pila_operandos.pop();
-					if(op_2.length != op_1.length ||
+					if(op_2.length != op_1.parameters.length ||
 						! _(op_2).reduce(function(memo, value, key) {
 							return memo && (value.type == this[key].type);
 						},true, op_1.parameters)) {
 						IO.printError(5, op_2);
 					}
+					this.addQuad(OP_ERA);
+					_(op_1.parameters).map(function(value, key) {
+						this.addQuad(OP_PARAM, value.direction());
+					}, this);
+					var ret = new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
+					this.addQuad(OP_GOSUB, op_1.direction, ret.direction());
 					// TODO: Agregar gotosub.
-					return new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
+					return ret;
 					break;
 				case "Ask":
 					var ask = true;
@@ -362,6 +369,10 @@ var NODE = function(id, type) {
 					this.addQuad(OP_GOTO, retorno);
 					FURRY.quads[falso][2] = FURRY.quads.length;
 					break;
+				case "Return":
+					var op_2 = pila_operandos.pop();
+					this.addQuad(OP_RETURN, op_2.direction());
+					break;
 				default:
 				;
 			}
@@ -377,7 +388,7 @@ var NODE = function(id, type) {
 			return _(this.variables).has(variable);
 		},
 		nodeExists: function(node) {
-			return _(this.nodes).has(node.id) || (this.parent? this.parent.nodeExists(node) : false);
+			return _(this.nodes).has(node) || (this.parent? this.parent.nodeExists(node) : false);
 		},
 		normalQuad: function() {
 			// Crear quad de suma
@@ -553,12 +564,12 @@ Program:
 		;
 ProgramInit:													[* root = new NODE('global'); current_node = root; *]
 		;
-GotoInicio: 													[* current_node.checkQuad('GotoInit'); *]
+GotoInicio: 													[* current_node.checkQuad('GotoInicio'); *]
 		;
 Inicio: InicioInit '(' ')' Bloque 								[* /* EMPTY */ *]
 		;
 InicioInit:
-		FINICIO													[* current_node = current_node.addNode(new NODE('inicio')); current_node.addQuad('Inicio') *]
+		FINICIO													[* current_node = current_node.addNode(new NODE('inicio')); current_node.checkQuad('Inicio') *]
 		;
 
 Var:	VarDecInit Exp ';' 										[* current_node.checkQuad('ExpAssign'); *]
@@ -581,8 +592,8 @@ Param:	Param ',' VarDec 										[* current_node.addParameter(%3); *]
 		| VarDec 												[* current_node.addParameter(%1); *]
 		;
 ArgsOpt:
-		Args 													[* /* EMPTY */ *]
-		| 														[* %% = [] *]
+		Args 													[* %% = %1; *]
+		| 														[* %% = []; *]
 		;
 Args:	Args ',' Exp 											[* %% = %1.push(%3); *]
 		| Exp 													[* %% = [%1]; *]
@@ -625,11 +636,11 @@ AsigancionInit:
 		IDENTIFICADOR '=' 										[* pila_operandos.push(current_node.useVariable(%1)); pila_operadores.push(OP_ASSIGN); *]
 		;
 Regreso:
-		RESPONDER Exp ';'
+		RESPONDER Exp ';' 										[* current_node.checkQuad('Return'); *]
 		;
 FunctionCall:
 		IDENTIFICADOR '(' ArgsOpt ')' 							[*
-																	pila_operandos.push(%1);
+																	pila_operandos.push(current_node.callFunction(%1));
 																	pila_operandos.push(%3);
 																	%% = current_node.checkQuad('FunCall');
 																*]
