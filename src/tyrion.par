@@ -661,22 +661,19 @@ Control:
 		| Foreach 												[* /* TODO  */ *]
 		| DoWhile 												[* /* EMPTY */ *]
 		;
-If:		IfInit Bloque 											[* current_node.checkQuad("EndIf"); current_node = current_node.parent;  *]
-		| IfInit Bloque SinoInit Bloque 						[* current_node.checkQuad("EndElse"); current_node = current_node.parent;  *]
-		| IfInit Bloque SinoInit If 							[* current_node.checkQuad("EndElse"); current_node = current_node.parent;  *]
+If:		IfInit Bloque 											[* current_node.checkQuad("EndIf"); *]
+		| IfInit Bloque SinoInit Bloque 						[* current_node.checkQuad("EndElse"); *]
+		| IfInit Bloque SinoInit If 							[* current_node.checkQuad("EndElse"); *]
 		;
-IfInit: SI '(' Exp ')' 											[*
-																	current_node = current_node.addNode(new NODE(_.uniqueId('_if_')));
-																	current_node.checkQuad('If');
-																*]
+IfInit: SI '(' Exp ')' 											[* current_node.checkQuad('If'); *]
 		;
 SinoInit:
-		SINO  													[* current_node = current_node.addNode(new NODE(_.uniqueId('_else_'))); current_node.checkQuad('Else'); *]
+		SINO  													[* current_node.checkQuad('Else'); *]
 		;
 While:	WhileInit '(' Exp ')' RepetirInit Bloque		 		[* current_node.checkQuad('EndWhile'); *]
 		;
 WhileInit:
-		MIENTRAS  												[* current_node = current_node.addNode(new NODE(_.uniqueId('_while_'))); pila_saltos.push(FURRY.quads.length); *]
+		MIENTRAS  												[* pila_saltos.push(FURRY.quads.length); *]
 		;
 RepetirInit:
 		REPETIR 												[* current_node.checkQuad('While'); *]
@@ -685,13 +682,13 @@ Foreach:
 		ForeachInit Bloque 										[* /* TODO */ *]
 		;
 ForeachInit:
-		PORCADA IDENTIFICADOR EN IDENTIFICADOR 					[* current_node.useVariable(%4); current_node = current_node.addNode(new NODE(_.uniqueId('_foreach_'))); current_node.addVariable(%2); *]
+		PORCADA IDENTIFICADOR EN IDENTIFICADOR 					[* current_node.useVariable(%4); current_node.addVariable(%2); *]
 		;
 DoWhile:
-		DoWhileInit Bloque MIENTRAS '(' Exp ')' ';' 			[* current_node.checkQuad("EndDoWhile"); current_node = current_node.parent; *]
+		DoWhileInit Bloque MIENTRAS '(' Exp ')' ';' 			[* current_node.checkQuad("EndDoWhile"); *]
 		;
 DoWhileInit:
-		HACER 													[* current_node = current_node.addNode(new NODE(_.uniqueId('_dowhile_'))); current_node.checkQuad("DoWhile"); *]
+		HACER 													[* current_node.checkQuad("DoWhile"); *]
 		;
 
 Tipo: 	TLETRAS 												[* %% = OP_STRING; *]
