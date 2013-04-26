@@ -41,21 +41,21 @@ var FURRY = function(json_string) {
 				return dir[1];
 		}
 	}
-}
-function save(element, dir){
-	switch(dir[0]){
-		case 0: //variable global
-			global[dir[1]]=element;
-			break;
-		case 1: //variable local
-			local[0][dir[1]]=element;
-			break;
-		case 2: //temporal local
-			local[1][dir[1]]=element;
-			break;
-		case 3: //temporal global
-			temp[dir[1]]=element;
-			break;
+	function save(element, dir){
+		switch(dir[0]){
+			case 0: //variable global
+				global[dir[1]]=element;
+				break;
+			case 1: //variable local
+				local[0][dir[1]]=element;
+				break;
+			case 2: //temporal local
+				local[1][dir[1]]=element;
+				break;
+			case 3: //temporal global
+				temp[dir[1]]=element;
+				break;
+		}
 	}
 	function hablar(element){
 		var audioElement = document.createElement('audio');
