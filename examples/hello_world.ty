@@ -8,6 +8,6 @@ funcion inicio() {
 	} sino si ( nombre == 'tierra' ) {
 		decir('Hola mundo');
 	} sino {
-		decir('No se quien eres!');
+		decir('Hola' + nombre + '!');
 	}
 }
