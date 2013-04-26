@@ -1,0 +1,14 @@
+Numero x;
+funcion Numero recursiva() {
+	si(x > 0) {
+		decir(x);
+		x = x -1;
+		responder recursiva();
+	} sino {
+	    responder 0;
+	}
+}
+funcion inicio() {
+	x = 5;
+	x = recursiva();
+}
