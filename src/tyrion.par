@@ -216,6 +216,7 @@ var NODE = function(id, type) {
 		args: [],
 		parameters: [],
 		variables: {},
+		vars_dir: {temp: [], local: []},
 		nodes: {},
 		quads_start: undefined,
 		parent: undefined,
@@ -233,6 +234,11 @@ var NODE = function(id, type) {
 			}
 			variable.parent = this;
 			this.variables[variable.id] = variable;
+			if(variable.id.startsWith('_tmp_')) {
+				variable._direction = [2, this.vars_dir.temp.push(0) - 1];
+			} else if(! variable.id.startsWith('_const_') ){
+				variable._direction = [1, this.vars_dir.local.push(0) - 1];
+			}
 			return variable;
 		},
 		addNode: function(node) {
@@ -246,7 +252,6 @@ var NODE = function(id, type) {
 			return node;
 		},
 		addParameter: function(parameter) {
-			parameter = this.addVariable(parameter);
 			this.parameters.push(parameter);
 			return parameter;
 		},
@@ -298,10 +303,10 @@ var NODE = function(id, type) {
 						IO.printError(5, op_2);
 					}
 					this.addQuad(OP_ERA);
-					_(op_1.parameters).map(function(value, key) {
+					_(op_2.parameters).map(function(value, key) {
 						this.addQuad(OP_PARAM, value.direction());
 					}, this);
-					var ret = new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
+					var ret = this.addVariable(new VARIABLE(_.uniqueId('_tmp_'), op_1.type));
 					this.addQuad(OP_GOSUB, op_1.direction, ret.direction());
 					// TODO: Agregar gotosub.
 					return ret;
@@ -322,7 +327,7 @@ var NODE = function(id, type) {
 				case "Listen":
 					var op_1 = pila_operandos.first();
 					var operador = pila_operadores.pop();
-					var tmp = new VARIABLE(_.uniqueId('_tmp_'), op_1.type);
+					var tmp = this.addVariable(new VARIABLE(_.uniqueId('_tmp_'), op_1.type));
 					this.addQuad(operador, tmp.direction(), tmp.type);
 					pila_operandos.push(tmp);
 					break;
@@ -395,7 +400,7 @@ var NODE = function(id, type) {
 			var op_2 = pila_operandos.pop();
 			var op_1 = pila_operandos.pop();
 			var operador = pila_operadores.pop();
-			var tmp = new VARIABLE(_.uniqueId('_tmp_'), checkOperation(op_1.type, operador, op_2.type));
+			var tmp = this.addVariable(new VARIABLE(_.uniqueId('_tmp_'), checkOperation(op_1.type, operador, op_2.type)));
 			if(tmp.type == -1) {
 				IO.printError(5, [op_1, operador, op_2]);
 			} else {
@@ -450,9 +455,11 @@ var IO = {
 var FURRY = {
 	addVariable: _.memoize(function(variable) {
 		 if(variable.startsWith("_const_")) {
-			return [4, this.variables.const.push(0)];
-		 } else if (variable.startsWith("_tmp_") || true) {
-			return [0, this.variables.global.push(0)];
+			return [4, this.variables.const.push(0)-1];
+		 } else if (variable.startsWith("_tmp_")) {
+			return [3, this.variables.temp.push(0)-1];
+		 } else if (true) {
+			return [0, this.variables.global.push(0)-1];
 		 }
 	}),
 	variables: {
@@ -464,7 +471,17 @@ var FURRY = {
 	},
 	quads: []
 };
-var root;
+var root = new NODE('_global_');
+root.addVariable = 	function(variable) {
+	if(_(this.variables).has(variable.id)) {
+		// Error! variable ya declarada!
+		IO.printError(1, variable.id);
+		return false;
+	}
+	variable.parent = this;
+	this.variables[variable.id] = variable;
+	return variable;
+};
 var current_node;
 var PILA = function() {
 	return {
@@ -562,7 +579,7 @@ var pila_saltos = new PILA();
 Program:
 		ProgramInit VarDecs GotoInicio FunctionDecs Inicio 		[* /* EMPTY */ *]
 		;
-ProgramInit:													[* root = new NODE('global'); current_node = root; *]
+ProgramInit:													[* current_node = root; *]
 		;
 GotoInicio: 													[* current_node.checkQuad('GotoInicio'); *]
 		;
@@ -595,8 +612,8 @@ ArgsOpt:
 		Args 													[* %% = %1; *]
 		| 														[* %% = []; *]
 		;
-Args:	Args ',' Exp 											[* %% = %1.push(%3); *]
-		| Exp 													[* %% = [%1]; *]
+Args:	Args ',' Exp 											[* %% = %1.push(pila_operandos.pop()); *]
+		| Exp 													[* %% = [pila_operandos.pop()]; *]
 		;
 
 Function:
@@ -613,7 +630,7 @@ FunctionDecs:
 		;
 
 Bloque:
-		'{' Statements '}' 										[* %% = %2; *]
+		'{' Statements '}' 										[* /* EMPTY */ *]
 		;
 
 Statements:
@@ -622,9 +639,9 @@ Statements:
 		;
 Statement:
 		Var 													[* /* EMPTY */ *]
-		| Control 												[* current_node = current_node.parent; *]
+		| Control 												[* /* EMPTY */ *]
 		| Asignacion 											[* /* EMPTY */ *]
-		| Regreso 												[* /* TODO  */ *]
+		| Regreso 												[* /* EMPTY */ *]
 		| FunctionCall ';' 										[* /* EMPTY */ *]
 		| SpecialFunctions 										[* /* EMPTY */ *]
 		| ';' 													[* /* EMPTY */ *]
