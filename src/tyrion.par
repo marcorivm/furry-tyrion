@@ -303,7 +303,7 @@ var NODE = function(id, type) {
 						IO.printError(5, op_2);
 					}
 					this.addQuad(OP_ERA);
-					_(op_2.parameters).map(function(value, key) {
+					_(op_2).map(function(value, key) {
 						this.addQuad(OP_PARAM, value.direction());
 					}, this);
 					var ret = this.addVariable(new VARIABLE(_.uniqueId('_tmp_'), op_1.type));
