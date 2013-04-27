@@ -10,6 +10,7 @@ funcion fiboIter(Numero n){
 		t = i + j;
 		i = j;
 		j = t;
+		k = k + 1;
 	}
 	decir(j);
 }
