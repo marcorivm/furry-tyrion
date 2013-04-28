@@ -5,24 +5,27 @@
 <body>
 	<form name="file">
 		<input type="file" id="file">
-		<button type="button" onclick="handleFileSelect()">Correr!</button><br/>
+		<button type="button" onclick="handleFileSelect()">Correr!</button>
 	</form>
 	-----------------------o-----------------------<br/>
 	<textarea name="quads" id="quads" cols="30" rows="10"></textarea><button type="button" onclick="FURRY(document.getElementById('quads').value);">Correr!</button>
 	<script src="furry.js" type="text/javascript"></script>
 	<script>
 		  function handleFileSelect() {
-		    var f = document.getElementById('file').files[0]; // FileList object
+		    var f = document.getElementById('file').files[0];
 
-		    // files is a FileList of File objects. List some properties.
-		    var reader = new FileReader();
-		    reader.onload = (function(theFile) {
-		    	return function(e) {
-		    		FURRY(e.target.result);
-		    		document.file.reset();
-		    	};
-		    })(f);
-		    reader.readAsText(f);
+		    if(f.name.split('.').pop()=='fur'){
+			    var reader = new FileReader();
+			    reader.onload = (function(theFile) {
+			    	return function(e) {
+			    		FURRY(e.target.result);
+			    		document.file.reset();
+			    	};
+			    })(f);
+			    reader.readAsText(f);
+			} else {
+				alert("El archivo seleccionado no es de tipo .fur");
+			}
 		  }
 	</script>
 </body>
