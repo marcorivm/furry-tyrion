@@ -3,7 +3,27 @@
 	<title>Furry</title>
 </head>
 <body>
+	<form name="file">
+		<input type="file" id="file">
+		<button onclick="handleFileSelect()">Correr!</button><br/>
+	<form/>
+	-----------------------o-----------------------<br/>
 	<textarea name="quads" id="quads" cols="30" rows="10"></textarea><button onclick="FURRY(document.getElementById('quads').value);">Correr!</button>
 	<script src="furry.js" type="text/javascript"></script>
+	<script>
+		  function handleFileSelect() {
+		    var f = document.getElementById('file').target.files[0]; // FileList object
+
+		    // files is a FileList of File objects. List some properties.
+		    var reader = new FileReader();
+		    reader.onload = (function(theFile) {
+		    	return function(e) {
+		    		FURRY(e.target.result);
+		    		document.file.reset();
+		    	};
+		    })(f);
+		    reader.readAsText(f);
+		  }
+	</script>
 </body>
 </html>
