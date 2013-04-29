@@ -24,7 +24,7 @@ var FURRY = function(json_string) {
 	local[0] = [];
 	local[1] = [];
 	var temp = [];
-	var funcionnueva;
+	var funcionesnuevas;
 	var cuadruplos = JSON.parse(json_string);
 	var cont = 0;
 	function arrayfinder(ele, ind){
@@ -154,17 +154,18 @@ var FURRY = function(json_string) {
 						cont=cuadruplos[cont][2]-1;
 					break;
 				case 20: // era
-					funcionnueva = [];
+					var funcionnueva = [];
 					funcionnueva[0] = [];
 					funcionnueva[1] = [];
+					funcionesnuevas.push(funcionnueva);
 					break;
 				case 21: // gosub
 					functionstack.push(new Array(cont, cuadruplos[cont][2], local));
-					local=funcionnueva;
+					local=funcionesnuevas.pop();
 					cont=cuadruplos[cont][1]-1;
 					break;
 				case 22: // param
-					funcionnueva[0].push(buscar(cuadruplos[cont][1]));
+					funcionesnuevas.slice(-1)[0][0].push(buscar(cuadruplos[cont][1]));
 					break;
 				case 23: // return
 					var tempreturn = buscar(cuadruplos[cont][1]);
