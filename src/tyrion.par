@@ -617,7 +617,7 @@ Args:	Args ',' Exp 											[* %% = %1.push(pila_operandos.pop()); *]
 		;
 
 Function:
-		FunctionInit '(' ParamOpt ')' Bloque 					[* /* EMPTY */ *]
+		FunctionInit '(' ParamOpt ')' Bloque 					[* pila_operandos.push([4,0]); current_node.checkQuad('Return'); *]
 		;
 FunctionInit:
 		FUNCION Tipo IDENTIFICADOR								[* current_node = current_node.addNode(new NODE(%3, %2)); *]
