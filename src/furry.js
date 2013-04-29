@@ -27,19 +27,36 @@ var FURRY = function(json_string) {
 	var funcionnueva;
 	var cuadruplos = JSON.parse(json_string);
 	var cont = 0;
+	function arrayfinder(ele, ind){
+		if(ind.length == 0){
+			return ele;
+		}
+		return arrayfinder(ele[buscar(ind.shift())], ind);
+	}
 	function buscar(dir){
+		var returner;
 		switch(dir[0]){
 			case 0: //variable global
-				return global[dir[1]];
+				returner =  global[dir[1]];
+				break;
 			case 1: //variable local
-				return local[0][dir[1]];
+				returner = local[0][dir[1]];
+				break;
 			case 2: //temporal local
-				return local[1][dir[1]];
+				returner = local[1][dir[1]];
+				break;
 			case 3: //temporal global
-				return temp[dir[1]];
+				returner = temp[dir[1]];
+				break;
 			case 4: //constante
-				return dir[1];
+				returner = dir[1];
+				break;
 		}
+		if(dir.length<=2)
+			return returner;
+		dir.shift();
+		dir.shift();
+		return arrayfinder(returner, dir);
 	}
 	function save(element, dir){
 		switch(dir[0]){
