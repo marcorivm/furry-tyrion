@@ -10,7 +10,7 @@
 // Aqui pueden ir funciones de javascript
 
 // Declarando underscore
-var _ = require('underscore');
+var TYRION = function(str) {
 
 // Extender prototype de String para usar startsWith
 if (typeof String.prototype.startsWith != 'function') {
@@ -62,6 +62,7 @@ _.mixin({
 var	OP_NUMBER = 1,
 	OP_STRING = 2,
 	OP_BOOL   = 3,
+	OP_ARRAY  = 4,
 
 	OP_ADD    = 1,	// +
 	OP_SUB    = 2,	// -
@@ -200,7 +201,7 @@ var VARIABLE = function (id, type, value) {
 		},
 		_direction: undefined,
 		direction: function() {
-			this._direction = this._direction? this._direction : FURRY.addVariable(this.namesapce());
+			this._direction = this._direction? this._direction : TYRION.addVariable(this.namesapce());
 			return this._direction;
 		}
 	};
@@ -221,7 +222,7 @@ var NODE = function(id, type) {
 		quads_start: undefined,
 		parent: undefined,
 		_namespace: undefined,
-		direction: FURRY.quads.length,
+		direction: TYRION.quads.length,
 		namesapce: function() {
 			this._namespace = this._namespace? this._namespace : (this.parent? (this.parent.namesapce() + '_' + this.id) : this.id);
 			return this._namespace;
@@ -256,7 +257,7 @@ var NODE = function(id, type) {
 			return parameter;
 		},
 		addQuad: function(op_id, op_1, op_2, result) {
-			return FURRY.quads.push([op_id, op_1, op_2, result].clean()) - 1;
+			return TYRION.quads.push([op_id, op_1, op_2, result].clean()) - 1;
 		},
 		checkQuad: function(quad_op) {
 			switch(quad_op) {
@@ -266,7 +267,7 @@ var NODE = function(id, type) {
 					break;
 				case "Inicio":
 					var inicio = pila_saltos.pop();
-					FURRY.quads[inicio][1] = this.direction;
+					TYRION.quads[inicio][1] = this.direction;
 					break;
 				case "ExpSum":
 					var operador = pila_operadores.first();
@@ -292,6 +293,18 @@ var NODE = function(id, type) {
 					} else {
 						IO.printError(5, [op_1, operador, op_2]);
 					}
+					break;
+				case "Matriz":
+					var op_2 = pila_operandos.pop();
+					var op_1 = pila_operandos.pop();
+					op_2 = _(op_2).map(function(value) {
+						return value.direction();
+					});
+					op_2 = op_2.join(',');
+					var tmp = new VARIABLE(_.uniqueId("tmp"), op_1.type);
+					tmp._direction = op_1.direction().slice(0);
+					tmp._direction.push(op_2);
+					pila_operandos.push(tmp);
 					break;
 				case "FunCall":
 					var op_2 = pila_operandos.pop();
@@ -342,7 +355,7 @@ var NODE = function(id, type) {
 				case "Else":
 					var falso = pila_saltos.pop();
 					pila_saltos.push(this.addQuad(OP_GOTO));
-					FURRY.quads[falso][2] = pila_saltos.first() + 1;
+					TYRION.quads[falso][2] = pila_saltos.first() + 1;
 					break;
 				case "While":
 					var op_1 = pila_operandos.pop();
@@ -353,7 +366,7 @@ var NODE = function(id, type) {
 					pila_saltos.push(this.addQuad(OP_GOTOF, op_1.direction()));
 					break;
 				case "DoWhile":
-					pila_saltos.push(FURRY.quads.length);
+					pila_saltos.push(TYRION.quads.length);
 					break;
 				case "EndDoWhile":
 					var inicio = pila_saltos.pop();
@@ -362,17 +375,17 @@ var NODE = function(id, type) {
 					break;
 				case "EndElse":
 					var fin = pila_saltos.pop();
-					FURRY.quads[fin][1] = FURRY.quads.length;
+					TYRION.quads[fin][1] = TYRION.quads.length;
 					break;
 				case "EndIf":
 					var fin = pila_saltos.pop();
-					FURRY.quads[fin][2] = FURRY.quads.length;
+					TYRION.quads[fin][2] = TYRION.quads.length;
 					break;
 				case "EndWhile":
 					var falso = pila_saltos.pop();
 					var retorno = pila_saltos.pop();
 					this.addQuad(OP_GOTO, retorno);
-					FURRY.quads[falso][2] = FURRY.quads.length;
+					TYRION.quads[falso][2] = TYRION.quads.length;
 					break;
 				case "Return":
 					var op_2 = pila_operandos.pop();
@@ -452,7 +465,7 @@ var IO = {
 };
 
 // Preparation code
-var FURRY = {
+var TYRION = {
 	addVariable: _.memoize(function(variable) {
 		 if(variable.startsWith("_const_")) {
 			return [4, this.variables.const.push(0)-1];
@@ -583,7 +596,7 @@ ProgramInit:													[* current_node = root; *]
 		;
 GotoInicio: 													[* current_node.checkQuad('GotoInicio'); *]
 		;
-Inicio: InicioInit '(' ')' Bloque 								[* /* EMPTY */ *]
+Inicio: InicioInit LeftPar RightPar Bloque 						[* /* EMPTY */ *]
 		;
 InicioInit:
 		FINICIO													[* current_node = current_node.addNode(new NODE('inicio')); current_node.checkQuad('Inicio') *]
@@ -617,7 +630,10 @@ Args:	Args ',' Exp 											[* %% = %1.push(pila_operandos.pop()); *]
 		;
 
 Function:
-		FunctionInit '(' ParamOpt ')' Bloque 					[* pila_operandos.push([4,0]); current_node.checkQuad('Return'); *]
+		FunctionInit LeftPar ParamOpt RightPar Bloque 			[*
+																	pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, 0)));
+																	current_node.checkQuad('Return');
+																*]
 		;
 FunctionInit:
 		FUNCION Tipo IDENTIFICADOR								[* current_node = current_node.addNode(new NODE(%3, %2)); *]
@@ -656,17 +672,17 @@ Regreso:
 		RESPONDER Exp ';' 										[* current_node.checkQuad('Return'); *]
 		;
 FunctionCall:
-		IDENTIFICADOR '(' ArgsOpt ')' 							[*
+		IDENTIFICADOR LeftPar ArgsOpt RightPar 					[*
 																	pila_operandos.push(current_node.callFunction(%1));
 																	pila_operandos.push(%3);
 																	%% = current_node.checkQuad('FunCall');
 																*]
 		;
 SpecialFunctions:
-		DECIR '(' Exp ')' ';' 									[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Speak');  *]
+		DECIR LeftPar Exp RightPar ';' 							[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Speak');  *]
 		;
-Read:	ESCUCHAR '(' ')' 										[* pila_operadores.push(OP_LISTEN); current_node.checkQuad('Listen'); *]
-		| _Read '(' Exp ')' 									[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Ask');  *]
+Read:	ESCUCHAR LeftPar RightPar 								[* pila_operadores.push(OP_LISTEN); current_node.checkQuad('Listen'); *]
+		| _Read LeftPar Exp RightPar 							[* pila_operadores.push(OP_SPEAK); current_node.checkQuad('Ask');  *]
 		;
 _Read: 	PREGUNTAR 												[* pila_operadores.push(OP_LISTEN); *]
 		;
@@ -682,15 +698,15 @@ If:		IfInit Bloque 											[* current_node.checkQuad("EndIf"); *]
 		| IfInit Bloque SinoInit Bloque 						[* current_node.checkQuad("EndElse"); *]
 		| IfInit Bloque SinoInit If 							[* current_node.checkQuad("EndElse"); *]
 		;
-IfInit: SI '(' Exp ')' 											[* current_node.checkQuad('If'); *]
+IfInit: SI LeftPar Exp RightPar 								[* current_node.checkQuad('If'); *]
 		;
 SinoInit:
 		SINO  													[* current_node.checkQuad('Else'); *]
 		;
-While:	WhileInit '(' Exp ')' RepetirInit Bloque		 		[* current_node.checkQuad('EndWhile'); *]
+While:	WhileInit LeftPar Exp RightPar RepetirInit Bloque		[* current_node.checkQuad('EndWhile'); *]
 		;
 WhileInit:
-		MIENTRAS  												[* pila_saltos.push(FURRY.quads.length); *]
+		MIENTRAS  												[* pila_saltos.push(TYRION.quads.length); *]
 		;
 RepetirInit:
 		REPETIR 												[* current_node.checkQuad('While'); *]
@@ -702,7 +718,7 @@ ForeachInit:
 		PORCADA IDENTIFICADOR EN IDENTIFICADOR 					[* current_node.useVariable(%4); current_node.addVariable(%2); *]
 		;
 DoWhile:
-		DoWhileInit Bloque MIENTRAS '(' Exp ')' ';' 			[* current_node.checkQuad("EndDoWhile"); *]
+		DoWhileInit Bloque MIENTRAS LeftPar Exp RightPar ';' 	[* current_node.checkQuad("EndDoWhile"); *]
 		;
 DoWhileInit:
 		HACER 													[* current_node.checkQuad("DoWhile"); *]
@@ -713,14 +729,21 @@ Tipo: 	TLETRAS 												[* %% = OP_STRING; *]
 		| TLOGICO 												[* %% = OP_BOOL; *]
 		| TMATRIZ 												[* %% = OP_ARRAY; *]
 		;
-Matriz:	Matriz '[' Exp ']'
-		| IDENTIFICADOR '[' Exp ']' 							[* pila_operandos.push(current_node.useVariable(%1)); *]
+Matriz:	IDENTIFICADOR _Matriz 									[*
+																	pila_operandos.push(current_node.useVariable(%1));
+																	pila_operandos.push(%2);
+																	current_node.checkQuad("Matriz");
+																*]
+		;
+_Matriz:
+		_Matriz '[' Exp ']' 									[* %% = %1.push(pila_operandos.pop());*]
+		| '[' Exp ']'											[* %% = [pila_operandos.pop()]; *]
 		;
 
 Exp:	ExpSum OpRel Exp 										[* current_node.checkQuad('ExpRel'); *]
 		| ExpSum
 		;
-ExpSum:	ExpMult _ExpSum ExpSum									[* ; *]
+ExpSum:	ExpMult _ExpSum ExpSum									[* /* EMPTY */ *]
 		| ExpMult 												[* current_node.checkQuad('ExpSum'); *]
 		;
 _ExpSum: '+'													[* current_node.checkQuad('ExpSum'); pila_operadores.push(OP_ADD); *]
@@ -728,7 +751,7 @@ _ExpSum: '+'													[* current_node.checkQuad('ExpSum'); pila_operadores.pu
 		| '||'													[* current_node.checkQuad('ExpSum'); pila_operadores.push(OP_OR); *]
 		;
 ExpMult:
-		ExpVal _ExpMult ExpMult 		 						[* ; *]
+		ExpVal _ExpMult ExpMult 		 						[* /* EMPTY */ *]
 		| ExpVal 												[* current_node.checkQuad('ExpMult'); *]
 		;
 _ExpMult: '*'													[* current_node.checkQuad('ExpMult'); pila_operadores.push(OP_MULT); *]
@@ -744,7 +767,7 @@ ExpVal:	IDENTIFICADOR 											[* pila_operandos.push(current_node.useVariable
 		| PI 	 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, Math.PI))); *]
 		| E 	 												[* pila_operandos.push(current_node.addVariable(new VARIABLE(_.uniqueId('_const_'), OP_NUMBER, Math.E))); *]
 		| LeftPar Exp RightPar 									[* /* EMPTY */ *]
-		| FunctionCall 											[* pila_operandos.push(%1); *]
+		| FunctionCall 											[* pila_operandos.push(%1);*]
 		;
 LeftPar:
 		'(' 													[* pila_operadores.push(Left_Par); *]
@@ -762,37 +785,22 @@ OpRel: 	'==' 													[* pila_operadores.push(OP_EQ); *]
 		;
 
 [*
-if(process.argv.length > 2) {
-	var file = process.argv[2];
-	var fs = require('fs');
-	fs.readFile(file, 'UTF-8', function(err, data) {
-		if(err) {
-			console.log("No se encontró el archivo!");
-			return console.log(err);
+if(str.length > 0) {
+	var error_cnt = 0;
+	var error_off = new Array();
+	var error_la = new Array();
+	if((error_cnt = __##PREFIX##parse(str, error_off, error_la)) > 0) {
+		for(var i = 0; i < error_cnt; i++ ) {
+			IO.print( "Parse error near >" + str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
 		}
-		var str = data;
-		var error_cnt = 0;
-		var error_off = new Array();
-		var error_la = new Array();
-		if((error_cnt = __##PREFIX##parse(str, error_off, error_la)) > 0) {
-			for(var i = 0; i < error_cnt; i++ ) {
-				IO.print( "Parse error near >" + str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
-			}
-		} else {
-			//IO.print("Programa correcto!");
-			var quads = JSON.stringify(FURRY.quads);
-			console.log(quads);
-			file = file.split('/');
-			file = file[file.length - 1];
-			file = file.replace('.ty', '.qds');
-			fs.writeFile(file, quads  , function (err) {
-			  if (err) throw err;
-			  // console.log('It\'s saved!');
-			});
-		}
-	});
+		return "";
+	} else {
+		var quads = JSON.stringify(TYRION.quads);
+		return quads;
+	}
+} else {
+	IO.print( 'Usage: TYRION(source_code)' );
+	return "";
 }
-else {
-	IO.print( 'usage: tyrion <filename>' );
-}
+};
 *]
