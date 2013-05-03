@@ -24,7 +24,7 @@ var FURRY = function(json_string) {
 	local[0] = [];
 	local[1] = [];
 	var temp = [];
-	var funcionesnuevas;
+	var funcionesnuevas = [];
 	var cuadruplos = JSON.parse(json_string);
 	var cont = 0;
 	function arrayfinder(ele, ind){
