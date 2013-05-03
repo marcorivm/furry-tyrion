@@ -62,7 +62,7 @@ var FURRY = function(json_string) {
 		return arrayfinder(returner, dir);
 	}
 	function save(element, dir){
-		if(dir.length == 2)
+		if(dir.length == 2) {
 			switch(dir[0]){
 				case 0: //variable global
 					global[dir[1]]=element;
