@@ -34,28 +34,25 @@ var FURRY = function(json_string) {
 		return arrayfinder(ele[buscar(ind.shift())], ind);
 	}
 	function buscar(dir){
+		dir = JSON.parse(JSON.stringify(dir));
 		var returner;
-		switch(dir[0]){
+		switch(dir.shift()){
 			case 0: //variable global
-				returner =  global[dir[1]];
+				returner =  global[dir.shift()];
 				break;
 			case 1: //variable local
-				returner = local[0][dir[1]];
+				returner = local[0][dir.shift()];
 				break;
 			case 2: //temporal local
-				returner = local[1][dir[1]];
+				returner = local[1][dir.shift()];
 				break;
 			case 3: //temporal global
-				returner = temp[dir[1]];
+				returner = temp[dir.shift()];
 				break;
 			case 4: //constante
-				returner = dir[1];
+				returner = dir.shift();
 				break;
 		}
-		if(dir.length<=2)
-			return returner;
-		dir.shift();
-		dir.shift();
 		return arrayfinder(returner, dir);
 	}
 	function save(element, dir){
