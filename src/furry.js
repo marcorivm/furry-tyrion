@@ -33,6 +33,12 @@ var FURRY = function(json_string) {
 		}
 		return arrayfinder(ele[buscar(ind.shift())], ind);
 	}
+	function arraysaver(ele, ind, val){
+		if(ind.length == 1){
+			ele[buscar(ind.shift())]=val;
+		}
+		arraysaver(ele[buscar(ind.shift())], ind, val);
+	}
 	function buscar(dir){
 		dir = JSON.parse(JSON.stringify(dir));
 		var returner;
@@ -56,19 +62,39 @@ var FURRY = function(json_string) {
 		return arrayfinder(returner, dir);
 	}
 	function save(element, dir){
-		switch(dir[0]){
-			case 0: //variable global
-				global[dir[1]]=element;
-				break;
-			case 1: //variable local
-				local[0][dir[1]]=element;
-				break;
-			case 2: //temporal local
-				local[1][dir[1]]=element;
-				break;
-			case 3: //temporal global
-				temp[dir[1]]=element;
-				break;
+		if(dir.length == 2)
+			switch(dir[0]){
+				case 0: //variable global
+					global[dir[1]]=element;
+					break;
+				case 1: //variable local
+					local[0][dir[1]]=element;
+					break;
+				case 2: //temporal local
+					local[1][dir[1]]=element;
+					break;
+				case 3: //temporal global
+					temp[dir[1]]=element;
+					break;
+			}
+		} else {
+			dir = JSON.parse(JSON.stringify(dir));
+			var arr;
+			switch(dir.shift()){
+				case 0: //variable global
+					arr=global[dir.shift()];
+					break;
+				case 1: //variable local
+					arr=local[0][dir.shift()];
+					break;
+				case 2: //temporal local
+					arr=local[1][dir.shift()]=element;
+					break;
+				case 3: //temporal global
+					arr=temp[dir.shift()];
+					break;
+			}
+			arraysaver(arr, dir, element);
 		}
 	}
 	function hablar(element){
