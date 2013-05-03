@@ -1,0 +1,8 @@
+funcion inicio(){
+	Numero x;
+	Numero y;
+	x[1][2] = 5;
+	x[4] = 8;
+	decir(x[1][2]);
+	decir(x[4]);
+}
