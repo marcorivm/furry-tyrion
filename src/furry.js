@@ -24,7 +24,7 @@ var FURRY = function(json_string) {
 	local[0] = [];
 	local[1] = [];
 	var temp = [];
-	var funcionesnuevas;
+	var funcionesnuevas = [];
 	var cuadruplos = JSON.parse(json_string);
 	var cont = 0;
 	function arrayfinder(ele, ind){
@@ -64,7 +64,7 @@ var FURRY = function(json_string) {
 		return arrayfinder(returner, dir);
 	}
 	function save(element, dir){
-		if(dir.length == 2)
+		if(dir.length == 2) {
 			switch(dir[0]){
 				case 0: //variable global
 					global[dir[1]]=element;

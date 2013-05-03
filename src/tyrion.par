@@ -300,10 +300,10 @@ var NODE = function(id, type) {
 					op_2 = _(op_2).map(function(value) {
 						return value.direction();
 					});
-					op_2 = op_2.join(',');
 					var tmp = new VARIABLE(_.uniqueId("tmp"), op_1.type);
 					tmp._direction = op_1.direction().slice(0);
 					tmp._direction.push(op_2);
+					tmp._direction = _(tmp._direction).flatten(true);
 					pila_operandos.push(tmp);
 					break;
 				case "FunCall":
@@ -551,7 +551,6 @@ var pila_saltos = new PILA();
 	"NUMERO"				TNUMERO
 	"LETRAS"				TLETRAS
 	"LOGICO"				TLOGICO
-	"MATRIZ"				TMATRIZ
 	"RAIZ"
 	"PI"
 	"E"
@@ -625,7 +624,7 @@ ArgsOpt:
 		Args 													[* %% = %1; *]
 		| 														[* %% = []; *]
 		;
-Args:	Args ',' Exp 											[* %% = %1.push(pila_operandos.pop()); *]
+Args:	Args ',' Exp 											[* %1.push(pila_operandos.pop()); %% = %1; *]
 		| Exp 													[* %% = [pila_operandos.pop()]; *]
 		;
 
@@ -666,7 +665,8 @@ Asignacion:
 		AsigancionInit Exp ';' 									[* current_node.checkQuad('ExpAssign'); *]
 		;
 AsigancionInit:
-		IDENTIFICADOR '=' 										[* pila_operandos.push(current_node.useVariable(%1)); pila_operadores.push(OP_ASSIGN); *]
+		Matriz '='		 										[* pila_operadores.push(OP_ASSIGN); *]
+		| IDENTIFICADOR '='										[* pila_operandos.push(current_node.useVariable(%1)); pila_operadores.push(OP_ASSIGN); *]
 		;
 Regreso:
 		RESPONDER Exp ';' 										[* current_node.checkQuad('Return'); *]
@@ -727,7 +727,6 @@ DoWhileInit:
 Tipo: 	TLETRAS 												[* %% = OP_STRING; *]
 		| TNUMERO 												[* %% = OP_NUMBER; *]
 		| TLOGICO 												[* %% = OP_BOOL; *]
-		| TMATRIZ 												[* %% = OP_ARRAY; *]
 		;
 Matriz:	IDENTIFICADOR _Matriz 									[*
 																	pila_operandos.push(current_node.useVariable(%1));
@@ -736,7 +735,7 @@ Matriz:	IDENTIFICADOR _Matriz 									[*
 																*]
 		;
 _Matriz:
-		_Matriz '[' Exp ']' 									[* %% = %1.push(pila_operandos.pop());*]
+		_Matriz '[' Exp ']' 									[* %1.push(pila_operandos.pop()); %% = %1;*]
 		| '[' Exp ']'											[* %% = [pila_operandos.pop()]; *]
 		;
 
