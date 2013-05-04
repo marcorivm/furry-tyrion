@@ -34,12 +34,13 @@ var FURRY = function(json_string) {
 		return arrayfinder(ele[buscar(ind.shift())], ind);
 	}
 	function arraysaver(ele, ind, val){
-		if(Object.prototype.toString.call(ele) !== '[object Array]')
-			ele=[];
 		if(ind.length == 1){
 			ele[buscar(ind.shift())]=val;
 		} else {
-			arraysaver(ele[buscar(ind.shift())], ind, val);
+			var aux=buscar(ind.shift());
+			if(Object.prototype.toString.call(ele[aux]) !== '[object Array]')
+				ele[aux]=[];
+			arraysaver(ele[aux], ind, val);
 		}
 	}
 	function buscar(dir){
