@@ -38,8 +38,9 @@ var FURRY = function(json_string) {
 			ele=[];
 		if(ind.length == 1){
 			ele[buscar(ind.shift())]=val;
+		} else {
+			arraysaver(ele[buscar(ind.shift())], ind, val);
 		}
-		arraysaver(ele[buscar(ind.shift())], ind, val);
 	}
 	function buscar(dir){
 		dir = JSON.parse(JSON.stringify(dir));
