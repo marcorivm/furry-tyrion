@@ -775,10 +775,10 @@ RightPar:
 		')' 													[* pila_operadores.pop(); *]
 		;
 LeftBr:
-		'(' 													[* pila_operadores.push(Left_Par); *]
+		'[' 													[* pila_operadores.push(Left_Par); *]
 		;
 RightBr:
-		')' 													[* pila_operadores.pop(); *]
+		']' 													[* pila_operadores.pop(); *]
 		;
 OpRel: 	'==' 													[* pila_operadores.push(OP_EQ); *]
 		| '!=' 													[* pila_operadores.push(OP_DIFF); *]
