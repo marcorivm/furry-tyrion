@@ -735,8 +735,8 @@ Matriz:	IDENTIFICADOR _Matriz 									[*
 																*]
 		;
 _Matriz:
-		_Matriz '[' Exp ']' 									[* %1.push(pila_operandos.pop()); %% = %1;*]
-		| '[' Exp ']'											[* %% = [pila_operandos.pop()]; *]
+		_Matriz LeftBr Exp RightBr 								[* %1.push(pila_operandos.pop()); %% = %1;*]
+		| LeftBr Exp RightBr									[* %% = [pila_operandos.pop()]; *]
 		;
 
 Exp:	ExpSum OpRel Exp 										[* current_node.checkQuad('ExpRel'); *]
@@ -772,6 +772,12 @@ LeftPar:
 		'(' 													[* pila_operadores.push(Left_Par); *]
 		;
 RightPar:
+		')' 													[* pila_operadores.pop(); *]
+		;
+LeftBr:
+		'(' 													[* pila_operadores.push(Left_Par); *]
+		;
+RightBr:
 		')' 													[* pila_operadores.pop(); *]
 		;
 OpRel: 	'==' 													[* pila_operadores.push(OP_EQ); *]
