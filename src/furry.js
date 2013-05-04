@@ -116,13 +116,15 @@ var FURRY = function(json_string) {
 	}
 	function hablar(element){
 		var audioElement = document.createElement('audio');
-		audioElement.setAttribute('src', "http://www.dajavax.com/tts.php?ie=UTF-8&tl=es_mx&q="+encodeURI(element)+"&textlen="+element.length+"&total=1&idx=0");
+		audioElement.setAttribute('src', "http://www.dajavax.com/tts.php?ie=UTF-8&tl=es_mx&q="+encodeURI(element)+"&textlen="+(element+"").length+"&total=1&idx=0");
 		audioElement.addEventListener('ended', exec);
 		audioElement.play();
 	}
 	function escuchar(dir, type){
 		recognition(function(result) {
 			if(type == 1) {
+				result=result.replace(" puntos ", ".");
+				result=result.replace(" punto ", ".");
 				result = parseFloat(result);
 			}
 			save(result, dir);
