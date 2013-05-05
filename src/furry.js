@@ -127,9 +127,22 @@ var FURRY = function(json_string) {
 	function escuchar(dir, type){
 		recognition(function(result) {
 			if(type == 1) {
-				result=result.replace(" puntos ", ".");
-				result=result.replace(" punto ", ".");
+				result=result.replace(/uno/g, "1");
+				result=result.replace(/dos/g, "2");
+				result=result.replace(/tres/g, "3");
+				result=result.replace(/cuatro/g, "4");
+				result=result.replace(/cinco/g, "5");
+				result=result.replace(/seis/g, "6");
+				result=result.replace(/siete/g, "7");
+				result=result.replace(/ocho/g, "8");
+				result=result.replace(/nueve/g, "9");
+				result=result.replace(/diez/g, "10");
+				result=result.replace(/puntos/g, ".");
+				result=result.replace(/punto/g, ".");
+				result=result.replace(/ /g, "");
 				result = parseFloat(result);
+				if(isNaN(result))
+					cont--;
 			}
 			save(result, dir);
 			exec();
