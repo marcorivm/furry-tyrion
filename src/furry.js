@@ -5,12 +5,16 @@ var FURRY = function(json_string) {
 				save_function(prompt());
 			};
 		} else {
-			var recognition = new webkitSpeechRecognition();
-			recognition.lang = "es-MX";
-			recognition.onstart = function() {};
-			recognition.onerror = function(event) {};
-			recognition.onend = function() {};
+			var beep = document.createElement('audio');
+			var beep3 = document.createElement('audio');
+			beep.setAttribute('src', 'sounds/beep.wav');
+			beep3.setAttribute('src', 'sounds/beep3.wav');
 			return function (save_function) {
+				var recognition = new webkitSpeechRecognition();
+				recognition.lang = "es-MX";
+				recognition.onstart = function() {beep.play();};
+				recognition.onerror = function(event) { console.log(event);};
+				recognition.onend = function() {};
 				recognition.onresult = function(event) {
 					save_function(event.results[0][0].transcript);
 				};
@@ -28,7 +32,7 @@ var FURRY = function(json_string) {
 	var cuadruplos = JSON.parse(json_string);
 	var cont = 0;
 	function arrayfinder(ele, ind){
-		if(ind.length == 0){
+		if(ind.length === 0){
 			return ele;
 		}
 		return arrayfinder(ele[buscar(ind.shift())], ind);

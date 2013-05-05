@@ -1,0 +1,6 @@
+funcion inicio(){
+	Letras x = escuchar();
+	Letras y = escuchar();
+	decir(x);
+	decir(y);
+}
