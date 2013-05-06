@@ -6,14 +6,18 @@ var FURRY = function(json_string) {
 			};
 		} else {
 			var beep = document.createElement('audio');
-			var beep3 = document.createElement('audio');
 			beep.setAttribute('src', 'sounds/beep.wav');
-			beep3.setAttribute('src', 'sounds/beep3.wav');
 			return function (save_function) {
 				var recognition = new webkitSpeechRecognition();
 				recognition.lang = "es-MX";
 				recognition.onstart = function() {beep.play();};
-				recognition.onerror = function(event) { console.log(event);};
+				recognition.onerror = function(event) {
+					cont--;
+					var audioElement = document.createElement('audio');
+					audioElement.setAttribute('src', "sounds/error.ogg");
+					audioElement.addEventListener('ended', exec);
+					audioElement.play();
+				};
 				recognition.onend = function() {};
 				recognition.onresult = function(event) {
 					save_function(event.results[0][0].transcript);
@@ -143,11 +147,20 @@ var FURRY = function(json_string) {
 				result=result.replace(/punto/g, ".");
 				result=result.replace(/ /g, "");
 				result = parseFloat(result);
-				if(isNaN(result))
+				if(isNaN(result)){
 					cont--;
+					var audioElement = document.createElement('audio');
+					audioElement.setAttribute('src', "sounds/error.ogg");
+					audioElement.addEventListener('ended', exec);
+					audioElement.play();
+					return;
+				}
 			}
 			save(result, dir);
-			exec();
+			var audioElement = document.createElement('audio');
+			audioElement.setAttribute('src', "sounds/success.ogg");
+			audioElement.addEventListener('ended', exec);
+			audioElement.play();
 		});
 	}
 	function exec() {
