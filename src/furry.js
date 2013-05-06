@@ -42,7 +42,7 @@ var FURRY = function(json_string) {
 			ele[buscar(ind.shift())]=val;
 		} else {
 			var aux=buscar(ind.shift());
-			if(Object.prototype.toString.call(ele[aux]) !== '[object Array]')
+			if(!Array.isArray(ele[aux]))
 				ele[aux]=[];
 			arraysaver(ele[aux], ind, val);
 		}
@@ -92,25 +92,25 @@ var FURRY = function(json_string) {
 			switch(dir.shift()){
 				case 0: //variable global
 					aux=dir.shift();
-					if(Object.prototype.toString.call(global[aux]) !== '[object Array]')
+					if(!Array.isArray(global[aux]))
 						global[aux]=[];
 					arr=global[aux];
 					break;
 				case 1: //variable local
 					aux=dir.shift();
-					if(Object.prototype.toString.call(local[0][aux]) !== '[object Array]')
+					if(!Array.isArray(local[0][aux]))
 						local[0][aux]=[];
 					arr=local[0][aux];
 					break;
 				case 2: //temporal local
 					aux=dir.shift();
-					if(Object.prototype.toString.call(local[1][aux]) !== '[object Array]')
+					if(!Array.isArray(local[1][aux]))
 						local[1][aux]=[];
 					arr=local[1][aux];
 					break;
 				case 3: //temporal global
 					aux=dir.shift();
-					if(Object.prototype.toString.call(temp[aux]) !== '[object Array]')
+					if(!Array.isArray(temp[aux]))
 						temp[aux]=[];
 					arr=temp[aux];
 					break;
