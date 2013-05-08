@@ -9,7 +9,6 @@
 [*
 // Aqui pueden ir funciones de javascript
 
-// Declarando underscore
 var TYRION = function(str) {
 
 // Extender prototype de String para usar startsWith
@@ -18,6 +17,8 @@ if (typeof String.prototype.startsWith != 'function') {
 	return this.slice(0, str.length) == str;
   };
 }
+// Extender prototype de Array para usar función clean
+// limpia los valores undefined y nulos de un arreglo
 if(typeof Array.prototype.clean != 'function') {
 	Array.prototype.clean = function(deleteValue) {
 	  for (var i = 0; i < this.length; i++) {
@@ -90,7 +91,7 @@ var	OP_NUMBER = 1,
 	Left_Par  = 24,
 	Right_Par = 25
 ;
-
+// Declaración del cubo semántico, solo las operaciones permitidas se guardan.
 var tabla_operaciones = {
 		1: {
 			1: {
@@ -175,6 +176,7 @@ var tabla_operaciones = {
 			}
 		}
 };
+// Función que revisa si una operación es valida.
 var checkOperation = function (op_1, operation, op_2) {
 	return (
 			_(tabla_operaciones).has(op_1)
@@ -184,6 +186,9 @@ var checkOperation = function (op_1, operation, op_2) {
 			tabla_operaciones[op_1][operation][op_2]
 			: -1;
 };
+// Estructura que permite la creación de nuevas variables
+// recibe como parametro un id único, un tipo (1,2,3) y
+// opcionalmente recibe un valor.
 var VARIABLE = function (id, type, value) {
 	if(type == 1) {
 		value = parseFloat(value);
@@ -199,32 +204,46 @@ var VARIABLE = function (id, type, value) {
 			return this._namespace;
 		},
 		_direction: undefined,
+		// Función que calcula la dirección de la variable.
 		direction: function() {
 			this._direction = this._direction? this._direction : TYRION.addVariable(this.namesapce());
 			return this._direction;
 		}
 	};
 	if(id.startsWith('_const_')) {
+		// Si es una constante asignar la dirección ahora.
 		x._direction = [4, value];
 	}
+
+	// Regresar la nueva variable.
 	return x;
 };
+
+// Estructura que permite la creación de nuevos nodos
+// recibe como parametros un id único y opcionalmente
+// un tipo de regreso.
 var NODE = function(id, type) {
 	var node = {
 		id: id,
 		type: (type? type : 0),
 		parameters: [],
+		// Mapa con las variables, el indice está dado por el id de cada variable
 		variables: {},
 		vars_dir: {temp: [], local: []},
+		// Mapa con los nodos hijos, el indice está dado por el id de cada nodo.
 		nodes: {},
-		quads_start: undefined,
+		// Nodo padre.
 		parent: undefined,
 		_namespace: undefined,
+		// Dirección de inicio.
 		direction: TYRION.quads.length,
 		namesapce: function() {
 			this._namespace = this._namespace? this._namespace : (this.parent? (this.parent.namesapce() + '_' + this.id) : this.id);
 			return this._namespace;
 		},
+		// Función que permite agregar una nueva variable
+		// Verifica que no se encuentre ya declarada y le
+		// asigna una dirección en memoria.
 		addVariable: function(variable) {
 			if(_(this.variables).has(variable.id)) {
 				// Error! variable ya declarada!
@@ -240,6 +259,8 @@ var NODE = function(id, type) {
 			}
 			return variable;
 		},
+		// Agrega un nuevo nodo hijo, verifica que no se
+		// encuentre ya declarado. 
 		addNode: function(node) {
 			if(_(this.nodes).has(node.id)) {
 				// Error! función ya declarada!
@@ -250,13 +271,18 @@ var NODE = function(id, type) {
 			this.nodes[node.id] = node;
 			return node;
 		},
+		// Agrega un nuevo parametro a la pila de parametros de la función
 		addParameter: function(parameter) {
 			this.parameters.push(parameter);
 			return parameter;
 		},
+		// Agrega un nuevo quad al listado de quads de TYRION
 		addQuad: function(op_id, op_1, op_2, result) {
 			return TYRION.quads.push([op_id, op_1, op_2, result].clean()) - 1;
 		},
+		// Función encargada de las verificaciones para la creación
+		// de cuadruplos, se encarga de sacar los operadores y operandos
+		// necesarios de la pila y crear los cuádruplos correspondientes.
 		checkQuad: function(quad_op) {
 			switch(quad_op) {
 				case "GotoInicio":
@@ -323,6 +349,7 @@ var NODE = function(id, type) {
 					break;
 				case "Ask":
 					var ask = true;
+					// No se incluye un break para conseguir un efecto de cascada
 				case "Speak":
 					var op_2 = pila_operandos.pop();
 					var operador = pila_operadores.pop();
@@ -390,6 +417,12 @@ var NODE = function(id, type) {
 				;
 			}
 		},
+		// Llamada a una función dentro del contexto
+		// busca la función a la que se está llamando
+		// si la encuentra en este contexto la regresa,
+		// en caso contrario realiza una busqueda
+		// recursiva en el padre, sino se encuentra
+		// se dispara un error.
 		callFunction: function(function_id, override) {
 			if(override || this.nodeExists(function_id)) {
 				return _(this.nodes).has(function_id)? this.nodes[function_id] : this.parent.callFunction(function_id, true);
@@ -397,12 +430,15 @@ var NODE = function(id, type) {
 			IO.printError(4, function_id);
 			return false;
 		},
+		// Verifica si la variable se encuentra en este contexto.
 		hasVariable: function(variable) {
 			return _(this.variables).has(variable);
 		},
+		// Verifica si el nodo existe en este o en el nodo padre.
 		nodeExists: function(node) {
 			return _(this.nodes).has(node) || (this.parent? this.parent.nodeExists(node) : false);
 		},
+		// Crea un cuádruplo de operación normal [op_code, op1, op2, temp]
 		normalQuad: function() {
 			// Crear quad de suma
 			var op_2 = pila_operandos.pop();
@@ -416,6 +452,12 @@ var NODE = function(id, type) {
 				pila_operandos.push(tmp);
 			}
 		},
+		// Llamada a una variable dentro del contexto
+		// busca la variable a la que se está llamando
+		// si la encuentra en este contexto la regresa,
+		// en caso contrario realiza una busqueda
+		// recursiva en el padre, sino se encuentra
+		// se dispara un error.
 		useVariable: function(variable_id, override) {
 			if(override || this.variableExists(variable_id)) {
 				return _(this.variables).has(variable_id)? this.variables[variable_id] : this.parent.useVariable(variable_id, true);
@@ -430,11 +472,13 @@ var NODE = function(id, type) {
 
 	return node;
 };
-
+// Estructura encargada de las operación de Input y Output
 var IO = {
 	print: function (to_print) {
 		return console.log(to_print);
 	},
+	// Función que maneja los errores.
+	// Al utilizar throw se interrumpe la ejecución.
 	printError: function(error_number) {
 		switch(error_number) {
 			case 1:
@@ -461,7 +505,8 @@ var IO = {
 	}
 };
 
-// Preparation code
+// TYRION contiene la estructura de memoria principal
+// guarda las variables globales y los cuádruplos ya generados
 var TYRION = {
 	addVariable: _.memoize(function(variable) {
 		 if(variable.startsWith("_const_")) {
@@ -481,6 +526,7 @@ var TYRION = {
 	},
 	quads: []
 };
+// Nodo inicial
 var root = new NODE('_global_');
 root.addVariable = 	function(variable) {
 	if(_(this.variables).has(variable.id)) {
@@ -493,6 +539,7 @@ root.addVariable = 	function(variable) {
 	return variable;
 };
 var current_node;
+// Estructura tipo pila.
 var PILA = function() {
 	return {
 		pila: [],
