@@ -1,4 +1,5 @@
 var FURRY = function(json_string) {
+	//Funcion que se encarga del reconocimiento de voz. Genera un transcript de lo escuchado.
     var recognition = (function() {
 		if (!('webkitSpeechRecognition' in window)) {
 			return function(save_function) {
@@ -35,12 +36,14 @@ var FURRY = function(json_string) {
 	var funcionesnuevas = [];
 	var cuadruplos = JSON.parse(json_string);
 	var cont = 0;
+	//Funcion que recorre arreglos para obtener el elemento. Recibe como parametro la dimension actual y la lista de indices restantes.
 	function arrayfinder(ele, ind){
 		if(ind.length === 0){
 			return ele;
 		}
 		return arrayfinder(ele[buscar(ind.shift())], ind);
 	}
+	//Funcion que recorre arreglos para guardar el elemento. Recibe como parametro la dimension actual, los indices restantes, y el elemento a guardar.
 	function arraysaver(ele, ind, val){
 		if(ind.length == 1){
 			ele[buscar(ind.shift())]=val;
@@ -51,6 +54,7 @@ var FURRY = function(json_string) {
 			arraysaver(ele[aux], ind, val);
 		}
 	}
+	//Funcion que se encarga de obtener elementos de la memoria. Recibe como parametro la direccion y regresa el elemento encontrado
 	function buscar(dir){
 		dir = JSON.parse(JSON.stringify(dir));
 		var returner;
@@ -71,9 +75,11 @@ var FURRY = function(json_string) {
 				returner = dir.shift();
 				break;
 		}
-		return arrayfinder(returner, dir);
+		return arrayfinder(returner, dir); //recorre el arreglo en caso de que exista
 	}
+	//Funcion que se encarga de guardar elementos en la memoria. Recibe como parametro el elemento y su direccion.
 	function save(element, dir){
+		//guarda directamente si no es un arreglo
 		if(dir.length == 2) {
 			switch(dir[0]){
 				case 0: //variable global
@@ -89,7 +95,7 @@ var FURRY = function(json_string) {
 					temp[dir[1]]=element;
 					break;
 			}
-		} else {
+		} else { //si es un arreglo obtiene el arreglo real en la memoria
 			dir = JSON.parse(JSON.stringify(dir));
 			var arr;
 			var aux;
@@ -119,9 +125,10 @@ var FURRY = function(json_string) {
 					arr=temp[aux];
 					break;
 			}
-			arraysaver(arr, dir, element);
+			arraysaver(arr, dir, element);//recorre el arreglo
 		}
 	}
+	//Funcion que se encarga de reproducir la voz. Recibe como parametro el elemento que dira.
 	function hablar(element){
 		if(typeof element === "boolean")
 			element=(element)?"verdadero":"falso";
@@ -130,9 +137,11 @@ var FURRY = function(json_string) {
 		audioElement.addEventListener('ended', exec);
 		audioElement.play();
 	}
+	//Funcion que se encarga de llamar a recognition e interpretar sus resultados. Recibe como parametros el tipo de dato a escuchar y la direccion donde se guardara.
 	function escuchar(dir, type){
 		recognition(function(result) {
 			if(type == 1) {
+				//parsea numeros en caracteres a digitos
 				result=result.replace(/uno/g, "1");
 				result=result.replace(/dos/g, "2");
 				result=result.replace(/tres/g, "3");
@@ -149,7 +158,7 @@ var FURRY = function(json_string) {
 				result = parseFloat(result);
 				if(isNaN(result)){
 					cont--;
-					var audioElement = document.createElement('audio');
+					var audioElement = document.createElement('audio'); //genera audio de error
 					audioElement.setAttribute('src', "sounds/error.ogg");
 					audioElement.addEventListener('ended', exec);
 					audioElement.play();
@@ -157,12 +166,13 @@ var FURRY = function(json_string) {
 				}
 			}
 			save(result, dir);
-			var audioElement = document.createElement('audio');
+			var audioElement = document.createElement('audio'); //genera audio de exito
 			audioElement.setAttribute('src', "sounds/success.ogg");
 			audioElement.addEventListener('ended', exec);
 			audioElement.play();
 		});
 	}
+	//Función principal de ejecucion. Se encarga de recorrer los cuadruplos y hacer las operaciones basicas.
 	function exec() {
 		while(cont<cuadruplos.length){
 			switch(cuadruplos[cont][0]){
