@@ -841,16 +841,17 @@ if(str.length > 0) {
 	var error_call = function(offset, elements) {
 		IO.printError(6,  [str.substr( offset, 30 ), elements.join()] );
 	}
+	// Corre el parser sobre la entrada "str"
 	if((error_cnt = __##PREFIX##parse(str, error_off, error_la, error_call)) > 0) {
-		for(var i = 0; i < error_cnt; i++ ) {
-		}
 		return "";
 	} else {
+		// Crea los cuádruplos en formato JSON para pasarlos a FURRY
 		var quads = JSON.stringify(TYRION.quads);
 		return quads;
 	}
 } else {
-	IO.print( 'Usage: TYRION(source_code)' );
+	// Muestra el metodo correcto de llamar el programa
+	IO.print( 'Uso: TYRION(source_code)' );
 	return "";
 }
 };
