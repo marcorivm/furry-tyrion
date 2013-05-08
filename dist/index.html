@@ -15,7 +15,7 @@
 						<label for="quads">&Oacute; ingresa tu c&oacute;digo</label>
 						<textarea name="src" id="quads" rows="10" class="span12" style="resize:vertical"></textarea>
 						<div class="form-actions">
-						  <button type="submit" class="btn btn-success pull-right"><i class="icon-play icon icon-white"></i> Correr!</button>
+						  <button type="submit" class="btn btn-success pull-right" id="run-code"><i class="icon-play icon icon-white"></i> Correr!</button>
 						</div>
 					</fieldset>
 					</form>
@@ -52,10 +52,12 @@
 		download_btn.on("click", function () { downloadFile(); });
 		code_form.on("change", "#file",function() {handleFileSelect();});
 		code_form.on("blur", "#quads", function() { code = document.getElementById('quads').value; document.getElementById('code-container').innerHTML = code; prettyPrint(); compile(code) });
-		code_form.on("submit", function() {
-			run(compile(code));
+		code_form.on("click", "#run-code" , function() {
+			if(compile(code)) {
+				run(quads);
+			}
 			return false;
-		}, false);
+		});
 		var code = "";
 		var quads = "";
 		var run = function(quads) {
