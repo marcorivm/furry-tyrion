@@ -438,23 +438,25 @@ var IO = {
 	printError: function(error_number) {
 		switch(error_number) {
 			case 1:
-				this.print("Error variable " + arguments[1] + " ya declarada");
+				throw "Error variable <b>" + arguments[1] + "</b> ya declarada";
 			break;
 			case 2:
-				this.print("Error función " + arguments[1] + " ya declarada");
+				throw "Error función <b>" + arguments[1] + "</b> ya declarada";
 			break;
 			case 3:
-				this.print("Error la variable "+ arguments[1] + " no se encuentra declarada");
+				throw "Error la variable <b>"+ arguments[1] + "</b> no se encuentra declarada";
 			break;
 			case 4:
-				this.print("Error la función "+ arguments[1]  + " no se encuentra declarada");
+				throw "Error la función <b>"+ arguments[1]  + "</b> no se encuentra declarada";
 			break
 			case 5:
-				this.print("Error, tipos incompatibles - ")
-				this.print(arguments[1]);
+				throw "Error, tipos incompatibles, operador: <b>"  + arguments[1][1] + "</b> operando 1: <b>"  + arguments[1][0].type + "</b> operando 2: <b>"  + arguments[1][2].type + "</b>";
+			break;
+			case 6: // Parse errors
+				throw "Error, cerca de: <b>" + arguments[1][0] + "</b> se esperaba <b>" + arguments[1][1] + "</b>";
 			break;
 			default:
-				this.print("Error " + error_number);
+				throw "Error #" + error_number;
 		}
 	}
 };
@@ -787,11 +789,13 @@ OpRel: 	'==' 													[* pila_operadores.push(OP_EQ); *]
 [*
 if(str.length > 0) {
 	var error_cnt = 0;
-	var error_off = new Array();
-	var error_la = new Array();
-	if((error_cnt = __##PREFIX##parse(str, error_off, error_la)) > 0) {
+	var error_off = [];
+	var error_la = [];
+	var error_call = function(offset, elements) {
+		IO.printError(6,  [str.substr( offset, 30 ), elements.join()] );
+	}
+	if((error_cnt = __##PREFIX##parse(str, error_off, error_la, error_call)) > 0) {
 		for(var i = 0; i < error_cnt; i++ ) {
-			IO.print( "Parse error near >" + str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
 		}
 		return "";
 	} else {

@@ -430,23 +430,25 @@ var IO = {
 	printError: function(error_number) {
 		switch(error_number) {
 			case 1:
-				this.print("Error variable " + arguments[1] + " ya declarada");
+				throw "Error variable <b>" + arguments[1] + "</b> ya declarada";
 			break;
 			case 2:
-				this.print("Error función " + arguments[1] + " ya declarada");
+				throw "Error función <b>" + arguments[1] + "</b> ya declarada";
 			break;
 			case 3:
-				this.print("Error la variable "+ arguments[1] + " no se encuentra declarada");
+				throw "Error la variable <b>"+ arguments[1] + "</b> no se encuentra declarada";
 			break;
 			case 4:
-				this.print("Error la función "+ arguments[1]  + " no se encuentra declarada");
+				throw "Error la función <b>"+ arguments[1]  + "</b> no se encuentra declarada";
 			break
 			case 5:
-				this.print("Error, tipos incompatibles - ")
-				this.print(arguments[1]);
+				throw "Error, tipos incompatibles, operador: <b>"  + arguments[1][1] + "</b> operando 1: <b>"  + arguments[1][0].type + "</b> operando 2: <b>"  + arguments[1][2].type + "</b>";
+			break;
+			case 6: // Parse errors
+				throw "Error, cerca de: <b>" + arguments[1][0] + "</b> se esperaba <b>" + arguments[1][1] + "</b>";
 			break;
 			default:
-				this.print("Error " + error_number);
+				throw "Error #" + error_number;
 		}
 	}
 };
@@ -513,17 +515,17 @@ var pila_saltos = new PILA();
 /*
 	Default template driver for JS/CC generated parsers running as
 	browser-based JavaScript/ECMAScript applications.
-	
+
 	WARNING: 	This parser template will not run as console and has lesser
 				features for debugging than the console derivates for the
 				various JavaScript platforms.
-	
+
 	Features:
 	- Parser trace messages
 	- Integrated panic-mode error recovery
-	
+
 	Written 2007, 2008 by Jan Max Meyer, J.M.K S.F. Software Technologies
-	
+
 	This is in the public domain.
 */
 
@@ -2185,7 +2187,7 @@ switch( state )
 	{
 		info.att = info.src.substr( start, match_pos - start );
 		info.offset = match_pos;
-		
+
 switch( match )
 {
 	case 46:
@@ -2221,7 +2223,7 @@ switch( match )
 }
 
 
-function __FTparse( src, err_off, err_la )
+function __FTparse( src, err_off, err_la, err_call )
 {
 	var		sstack			= new Array();
 	var		vstack			= new Array();
@@ -2232,7 +2234,7 @@ function __FTparse( src, err_off, err_la )
 	var		rval;
 	var 	parseinfo		= new Function( "", "var offset; var src; var att;" );
 	var		info			= new parseinfo();
-	
+
 /* Pop-Table */
 var pop_tab = new Array(
 	new Array( 0/* Program' */, 1 ),
@@ -2775,19 +2777,19 @@ var labels = new Array(
 );
 
 
-	
+
 	info.offset = 0;
 	info.src = src;
 	info.att = new String();
-	
+
 	if( !err_off )
 		err_off	= new Array();
 	if( !err_la )
 	err_la = new Array();
-	
+
 	sstack.push( 0 );
 	vstack.push( 0 );
-	
+
 	la = __FTlex( info );
 
 	while( true )
@@ -2806,26 +2808,26 @@ var labels = new Array(
 		{
 			__FTdbg_print( "\nState " + sstack[sstack.length-1] + "\n" +
 							"\tLookahead: " + labels[la] + " (\"" + info.att + "\")\n" +
-							"\tAction: " + act + "\n" + 
+							"\tAction: " + act + "\n" +
 							"\tSource: \"" + info.src.substr( info.offset, 30 ) + ( ( info.offset + 30 < info.src.length ) ?
 									"..." : "" ) + "\"\n" +
 							"\tStack: " + sstack.join() + "\n" +
 							"\tValue stack: " + vstack.join() + "\n" );
 		}
-		
-			
+
+
 		//Panic-mode: Try recovery when parse-error occurs!
 		if( act == 162 )
 		{
 			if( FT_dbg_withtrace )
 				__FTdbg_print( "Error detected: There is no reduce or shift on the symbol " + labels[la] );
-			
+
 			err_cnt++;
-			err_off.push( info.offset - info.att.length );			
+			err_off.push( info.offset - info.att.length );
 			err_la.push( new Array() );
 			for( var i = 0; i < act_tab[sstack[sstack.length-1]].length; i+=2 )
 				err_la[err_la.length-1].push( labels[act_tab[sstack[sstack.length-1]][i]] );
-			
+			err_call(err_off[err_off.length-1], err_la[err_la.length-1]);
 			//Remember the original stack!
 			var rsstack = new Array();
 			var rvstack = new Array();
@@ -2834,7 +2836,7 @@ var labels = new Array(
 				rsstack[i] = sstack[i];
 				rvstack[i] = vstack[i];
 			}
-			
+
 			while( act == 162 && la != 101 )
 			{
 				if( FT_dbg_withtrace )
@@ -2843,15 +2845,15 @@ var labels = new Array(
 									"Action: " + act + "\n\n" );
 				if( la == -1 )
 					info.offset++;
-					
+
 				while( act == 162 && sstack.length > 0 )
 				{
 					sstack.pop();
 					vstack.pop();
-					
+
 					if( sstack.length == 0 )
 						break;
-						
+
 					act = 162;
 					for( var i = 0; i < act_tab[sstack[sstack.length-1]].length; i+=2 )
 					{
@@ -2862,19 +2864,19 @@ var labels = new Array(
 						}
 					}
 				}
-				
+
 				if( act != 162 )
 					break;
-				
+
 				for( var i = 0; i < rsstack.length; i++ )
 				{
 					sstack.push( rsstack[i] );
 					vstack.push( rvstack[i] );
 				}
-				
+
 				la = __FTlex( info );
 			}
-			
+
 			if( act == 162 )
 			{
 				if( FT_dbg_withtrace )
@@ -2886,40 +2888,40 @@ var labels = new Array(
 			if( FT_dbg_withtrace )
 				__FTdbg_print( "\tError recovery succeeded, continuing" );
 		}
-		
+
 		/*
 		if( act == 162 )
 			break;
 		*/
-		
-		
+
+
 		//Shift
 		if( act > 0 )
-		{			
+		{
 			if( FT_dbg_withtrace )
 				__FTdbg_print( "Shifting symbol: " + labels[la] + " (" + info.att + ")" );
-		
+
 			sstack.push( act );
 			vstack.push( info.att );
-			
+
 			la = __FTlex( info );
-			
+
 			if( FT_dbg_withtrace )
 				__FTdbg_print( "\tNew lookahead symbol: " + labels[la] + " (" + info.att + ")" );
 		}
 		//Reduce
 		else
-		{		
+		{
 			act *= -1;
-			
+
 			if( FT_dbg_withtrace )
 				__FTdbg_print( "Reducing by producution: " + act );
-			
+
 			rval = void(0);
-			
+
 			if( FT_dbg_withtrace )
 				__FTdbg_print( "\tPerforming semantic action..." );
-			
+
 switch( act )
 {
 	case 0:
@@ -3434,13 +3436,13 @@ switch( act )
 
 			if( FT_dbg_withtrace )
 				__FTdbg_print( "\tPopping " + pop_tab[act][1] + " off the stack..." );
-				
+
 			for( var i = 0; i < pop_tab[act][1]; i++ )
 			{
 				sstack.pop();
 				vstack.pop();
 			}
-									
+
 			go = -1;
 			for( var i = 0; i < goto_tab[sstack[sstack.length-1]].length; i+=2 )
 			{
@@ -3450,19 +3452,19 @@ switch( act )
 					break;
 				}
 			}
-			
+
 			if( act == 0 )
 				break;
-				
+
 			if( FT_dbg_withtrace )
 				__FTdbg_print( "\tPushing non-terminal " + labels[ pop_tab[act][0] ] );
-				
+
 			sstack.push( go );
-			vstack.push( rval );			
+			vstack.push( rval );
 		}
-		
+
 		if( FT_dbg_withtrace )
-		{		
+		{
 			alert( FT_dbg_string );
 			FT_dbg_string = new String();
 		}
@@ -3473,7 +3475,7 @@ switch( act )
 		__FTdbg_print( "\nParse complete." );
 		alert( FT_dbg_string );
 	}
-	
+
 	return err_cnt;
 }
 
@@ -3481,11 +3483,13 @@ switch( act )
 
 if(str.length > 0) {
 	var error_cnt = 0;
-	var error_off = new Array();
-	var error_la = new Array();
-	if((error_cnt = __FTparse(str, error_off, error_la)) > 0) {
+	var error_off = [];
+	var error_la = [];
+	var error_call = function(offset, elements) {
+		IO.printError(6,  [str.substr( offset, 30 ), elements.join()] );
+	}
+	if((error_cnt = __FTparse(str, error_off, error_la, error_call)) > 0) {
 		for(var i = 0; i < error_cnt; i++ ) {
-			IO.print( "Parse error near >" + str.substr( error_off[i], 30 ) + "<, expecting \"" + error_la[i].join() + "\"" );
 		}
 		return "";
 	} else {
