@@ -54,7 +54,6 @@ _.mixin({
 var	OP_NUMBER = 1,
 	OP_STRING = 2,
 	OP_BOOL   = 3,
-	OP_ARRAY  = 4,
 
 	OP_ADD    = 1,	// +
 	OP_SUB    = 2,	// -
@@ -206,7 +205,6 @@ var NODE = function(id, type) {
 	var node = {
 		id: id,
 		type: (type? type : 0),
-		args: [],
 		parameters: [],
 		variables: {},
 		vars_dir: {temp: [], local: []},
@@ -313,7 +311,6 @@ var NODE = function(id, type) {
 					}, this);
 					var ret = this.addVariable(new VARIABLE(_.uniqueId('_tmp_'), op_1.type));
 					this.addQuad(OP_GOSUB, op_1.direction, ret.direction());
-					// TODO: Agregar gotosub.
 					return ret;
 					break;
 				case "Ask":
@@ -337,6 +334,7 @@ var NODE = function(id, type) {
 					pila_operandos.push(tmp);
 					break;
 				case "If":
+				case "While":
 					var op_1 = pila_operandos.pop();
 					if(op_1.type != 3) {
 						IO.printError(5, [op_1]);
@@ -349,20 +347,17 @@ var NODE = function(id, type) {
 					pila_saltos.push(this.addQuad(OP_GOTO));
 					TYRION.quads[falso][2] = pila_saltos.first() + 1;
 					break;
-				case "While":
-					var op_1 = pila_operandos.pop();
-					if(op_1.type != 3) {
-						IO.printError(5, [op_1]);
-						break;
-					}
-					pila_saltos.push(this.addQuad(OP_GOTOF, op_1.direction()));
-					break;
 				case "DoWhile":
+				case "WhileInit":
 					pila_saltos.push(TYRION.quads.length);
 					break;
 				case "EndDoWhile":
 					var inicio = pila_saltos.pop();
 					var op_1 = pila_operandos.pop();
+					if(op_1.type != 3) {
+						IO.printError(5, [op_1]);
+						break;
+					}
 					this.addQuad(OP_GOTOT, op_1.direction(), inicio);
 					break;
 				case "EndElse":
@@ -3206,7 +3201,7 @@ switch( act )
 	break;
 	case 54:
 	{
-		 pila_saltos.push(TYRION.quads.length); 
+		 current_node.checkQuad('WhileInit'); 
 	}
 	break;
 	case 55:
@@ -3350,7 +3345,7 @@ switch( act )
 	break;
 	case 82:
 	{
-		 /* TODO  */ 
+		 /* EMPTY */ 
 	}
 	break;
 	case 83:
