@@ -24,7 +24,11 @@
 <pre class="prettyprint linenums" id="code-container">
 </pre>
 				</div>
-				<div class="span4 well" id="message-container"></div>
+				<div class="span4 well">
+					<div class="row-fluid"><button class="btn btn-primary" id="download-code" disabled="disabled"><i class="icon-download-alt icon icon-white"></i> Descargar .js</button></div>
+					<br />
+					<div class="row-fluid" id="message-container"></div>
+				</div>
 		</div>
 	</div>
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
@@ -42,8 +46,10 @@
 			alert.push('</div>');
 			return alert.join("");
 		}
+		var download_btn = $("#download-code");
 		var code_form = $("#code-form");
 		var message_container = $("#message-container");
+		download_btn.on("click", function () { downloadFile(); });
 		code_form.on("change", "#file",function() {handleFileSelect();});
 		code_form.on("blur", "#quads", function() { code = document.getElementById('quads').value; document.getElementById('code-container').innerHTML = code; prettyPrint(); compile(code) });
 		code_form.on("submit", function() {
@@ -51,17 +57,27 @@
 			return false;
 		}, false);
 		var code = "";
+		var quads = "";
 		var run = function(quads) {
 			FURRY(quads);
 		};
 		var compile = function(code) {
 			try {
-				var quads = TYRION(code);
+				quads = TYRION(code);
 				message_container.html(ALERT("Programa compilado con exito!", 'success'));
+				download_btn.removeAttr("disabled");
 				return quads;
 			} catch (err) {
+				download_btn.attr("disabled", "disabled");
 				message_container.append(ALERT(err, 'error'));
 			}
+		}
+		var downloadFile = function() {
+				var a = document.createElement('a');
+				var my_app = '(' + FURRY + ")('" + quads + "')";
+				a.href = 'data:text/javasript;charset=utf-8,' + encodeURIComponent( my_app );
+				a.download = prompt('Filename')+'.js';
+				a.click();
 		}
 		var handleFileSelect = function() {
 		    var f = document.getElementById('file').files[0];
