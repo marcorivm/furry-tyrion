@@ -1,0 +1,21 @@
+funcion inicio(){
+  Logico noencontrado=verdadero;
+  Numero x=preguntar('¿Qué número quieres buscar?');
+  Numero i=0;
+  Numero a;
+  a[0] = 5;
+  a[1] = 4;
+  a[2] = 3;
+  a[3] = 2;
+  a[4] = 1;
+  mientras (noencontrado&&(i<5)) repetir{
+    si(a[i]==x){
+      noencontrado=falso;
+      decir('El número está en el índice '+i);
+    }
+    i=i+1;
+  }
+  si(noencontrado){
+    decir('El número no fue encontrado.');
+  }
+}

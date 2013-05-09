@@ -1,6 +1,4 @@
 //fibonaccis
-Numero i = 1;
-Numero a;
 funcion fiboIter(Numero n){
 	Numero i = 1;
 	Numero j = 0;

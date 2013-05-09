@@ -1,0 +1,29 @@
+funcion inicio(){
+  Logico cambiado;
+  Numero i;
+  Numero temp;
+  Numero a;
+  a[0] = 5;
+  a[1] = 4;
+  a[2] = 3;
+  a[3] = 2;
+  a[4] = 1;
+  hacer{
+    cambiado = falso;
+    i=1;
+    mientras ( i < 5 ) repetir {
+      si(a[i-1]>a[i]){
+        temp = a[i];
+        a[i] = a[i-1];
+        a[i-1] = temp;
+        cambiado = verdadero;
+      }
+      i=i+1;
+    }
+  } mientras(cambiado);
+  i=0;
+  mientras ( i < 5 ) repetir {
+    decir(a[i]);
+    i=i+1;
+  }
+}

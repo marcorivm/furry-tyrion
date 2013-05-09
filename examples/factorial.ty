@@ -1,0 +1,25 @@
+//factoriales
+funcion factorialIter(Numero n){
+	Numero f=1;
+	Numero i = 1;
+	mientras ( i <= n ) repetir {
+		f=f*i;
+		i=i+1;
+	}
+	decir(f);
+}
+
+funcion Numero factorialRec(Numero n){
+	si ( n >= 1 ){
+		responder n*factorialRec(n-1);
+	} sino {
+		responder 1;
+	}
+}
+
+funcion inicio(){
+	Numero n = preguntar('¿Qué número quieres usar?');
+	factorialIter(n);
+	Numero res = factorialRec(n);
+	decir(res);
+}
