@@ -133,7 +133,7 @@ var FURRY = function(json_string) {
 		if(typeof element === "boolean")
 			element=(element)?"verdadero":"falso";
 		var audioElement = document.createElement('audio');
-		audioElement.setAttribute('src', "http://www.dajavax.com/tts.php?ie=UTF-8&tl=es_mx&q="+encodeURI(element)+"&textlen="+(element+"").length+"&total=1&idx=0");
+		audioElement.setAttribute('src', "https://translate.google.com.mx/translate_tts?ie=UTF-8&tl=es_mx&q="+encodeURI(element)+"&textlen="+(element+"").length+"&total=1&idx=0");
 		audioElement.addEventListener('ended', exec);
 		audioElement.play();
 	}
